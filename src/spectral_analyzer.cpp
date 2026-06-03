@@ -59,7 +59,7 @@ std::vector<std::vector<int>> SpectralAnalyzer::_feats(std::vector<std::vector<f
 
 #include <iostream>
 
-void SpectralAnalyzer::analyze(std::vector<float>& signal)
+std::vector<std::vector<int>> SpectralAnalyzer::analyze(std::vector<float>& signal)
 {
     std::vector<std::vector<float>> split_signal = _split(signal);
     _hann(split_signal);

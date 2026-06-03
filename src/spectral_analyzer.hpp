@@ -20,7 +20,7 @@ private:
 public:
     SpectralAnalyzer(const float frame_duration, const int sampling_frequency, const int feature_ratio);
 
-    void analyze(std::vector<float>& signal);
+    std::vector<std::vector<int>> analyze(std::vector<float>& signal);
 };
 
 #endif
