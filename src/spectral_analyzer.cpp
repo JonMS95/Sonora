@@ -41,15 +41,15 @@ void SpectralAnalyzer::_hann(std::vector<std::vector<float>>& split_signal) cons
         _hannSingleFrame(frame);
 }
 
-std::vector<float> SpectralAnalyzer::_featsSingleFrame(std::vector<float>& frame)
+std::vector<int> SpectralAnalyzer::_featsSingleFrame(std::vector<float>& frame)
 {
     return fft_proc_.featExt(frame);
 }
 
-std::vector<std::vector<float>> SpectralAnalyzer::_feats(std::vector<std::vector<float>>& split_signal)
+std::vector<std::vector<int>> SpectralAnalyzer::_feats(std::vector<std::vector<float>>& split_signal)
 {
     const int split_signal_size = static_cast<int>(split_signal.size());
-    std::vector<std::vector<float>> ret(split_signal_size);
+    std::vector<std::vector<int>> ret(split_signal_size);
 
     for(int f_idx = 0; f_idx < split_signal_size; f_idx++)
         ret[f_idx] = _featsSingleFrame(split_signal[f_idx]);
@@ -63,16 +63,16 @@ void SpectralAnalyzer::analyze(std::vector<float>& signal)
 {
     std::vector<std::vector<float>> split_signal = _split(signal);
     _hann(split_signal);
-    std::vector<std::vector<float>> ret = _feats(split_signal);
+    std::vector<std::vector<int>> ret = _feats(split_signal);
     
     int counter = 0;
 
-    for(const std::vector<float>& vf : ret)
+    for(const std::vector<int>& vi : ret)
     {
         std::cout << counter++ << ": ";
 
-        for(const float& f : vf)
-            std::cout << f << " ";
+        for(const int& i : vi)
+            std::cout << i << "\t" << " ";
     
         std::cout << std::endl;
     }
