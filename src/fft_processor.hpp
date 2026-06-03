@@ -24,7 +24,7 @@ public:
     virtual ~FFTProcessor(void);
 
     std::vector<float> FFT(const std::vector<float>& frame);
-    std::vector<float> featExt(const std::vector<float>& frame);
+    std::vector<int> featExt(const std::vector<float>& frame);
 };
 
 #endif

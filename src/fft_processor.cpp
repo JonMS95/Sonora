@@ -85,7 +85,7 @@ bool FFTProcessor::_isLocalMax(const int idx) const
     return ((prev <= cur) && (cur >= next));
 }
 
-std::vector<float> FFTProcessor::featExt(const std::vector<float>& frame)
+std::vector<int> FFTProcessor::featExt(const std::vector<float>& frame)
 {
     auto sort_crit = [this](const int& a, const int& b) -> bool
     {
@@ -97,7 +97,7 @@ std::vector<float> FFTProcessor::featExt(const std::vector<float>& frame)
     std::vector<int> idcs = indices_;
     std::priority_queue<int, std::vector<int>, decltype(sort_crit)> max_heap(idcs.begin(), idcs.end(), sort_crit);
     std::unordered_set<int> disc_idx;
-    std::vector<float> ret;
+    std::vector<int> ret;
     int idx;
 
     while(!max_heap.empty())
@@ -106,7 +106,7 @@ std::vector<float> FFTProcessor::featExt(const std::vector<float>& frame)
 
         if(!disc_idx.count(idx) && _isLocalMax(idx))
         {
-            ret.emplace_back(sq_mags_[idx]);
+            ret.emplace_back(idx);
 
             for(int i = (idx - feat_ratio_); i <= (idx + feat_ratio_); i++)
                 if(i >= 0 && i < num_of_bins_)
