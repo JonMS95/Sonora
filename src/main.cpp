@@ -3,6 +3,7 @@
 #include "preprocessor.hpp"
 #include "spectral_analyzer.hpp"
 #include "fingerprint_generator.hpp"
+#include "db_handler.hpp"
 
 int main(int argc, char** argv)
 {
@@ -15,13 +16,16 @@ int main(int argc, char** argv)
     const std::string& input    = std::string(argv[1]);
     const std::string& output   = std::string(argv[2]);
     
-    float downsmp_freq;
+    float downsmp_freq = 8000;
     char* end;
+
+    std::string db_path = std::string("fingerprints.db");
 
     if(argc > 3)
         downsmp_freq = strtof(argv[3], &end);
-    else
-        downsmp_freq = 8000.0;
+    
+    if(argc > 4)
+        db_path = std::string(argv[4]);
 
     const float frame_duration = 0.02;
     const int feat_ratio = 5;
@@ -37,7 +41,7 @@ int main(int argc, char** argv)
 
     for(auto it = hashes.begin(); it != hashes.end(); it++)
     {
-        std::cout << it->first << std::endl;
+        std::cout << "[" << it->first  << "] (" << it->second.size() << " elements)" << std::endl;
 
         for(uint32_t& h : it->second)
             std::cout << h << " ";
@@ -46,6 +50,8 @@ int main(int argc, char** argv)
 
         std::cout << "-------------------" << std::endl;
     }
+
+    DBHandler db_handler(db_path);
 
     return 0;
 }
