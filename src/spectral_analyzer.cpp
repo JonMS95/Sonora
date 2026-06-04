@@ -76,4 +76,6 @@ std::vector<std::vector<int>> SpectralAnalyzer::analyze(std::vector<float>& sign
     
         std::cout << std::endl;
     }
+
+    return ret;
 }
