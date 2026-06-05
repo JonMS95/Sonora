@@ -3,7 +3,8 @@
 #include <unordered_map>
 #include "fingerprint_generator.hpp"
 
-FingerprintGenerator::FingerprintGenerator(const int window_size) : win_size_(window_size)
+FingerprintGenerator::FingerprintGenerator(const int window_size, const int peak_number) :
+    win_size_(window_size), peak_num_(peak_number) 
 {}
 
 uint32_t FingerprintGenerator::_hash(const int peak_a, const int peak_b, const int idx_a, const int idx_b) const
@@ -19,10 +20,12 @@ uint32_t FingerprintGenerator::_hash(const int peak_a, const int peak_b, const i
 std::vector<uint32_t> FingerprintGenerator::_genFramePairHashes(const std::vector<std::vector<int>>& features, const int idx_a, const int idx_b) const
 {
     std::vector<uint32_t> ret;
+    const std::vector<int>& frame_a = features[idx_a];
+    const std::vector<int>& frame_b = features[idx_b];
 
-    for(const int& peak_a : features[idx_a])
-        for(const int& peak_b : features[idx_b])
-            ret.emplace_back(_hash(peak_a, peak_b, idx_a, idx_b));
+    for(int a_feat_idx = 0; a_feat_idx < peak_num_; a_feat_idx++)
+        for(int b_feat_idx = 0; b_feat_idx < peak_num_; b_feat_idx++)
+            ret.emplace_back(_hash(frame_a[a_feat_idx], frame_b[b_feat_idx], idx_a, idx_b));
 
     return ret;
 }

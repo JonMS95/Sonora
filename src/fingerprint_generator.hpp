@@ -9,12 +9,13 @@ class FingerprintGenerator
 {
 private:
     const int win_size_;
+    const int peak_num_;
 
     uint32_t _hash(const int peak_a, const int peak_b, const int idx_a, const int idx_b) const;
     std::vector<uint32_t> _genFramePairHashes(const std::vector<std::vector<int>>& features, const int idx_a, const int idx_b) const;
 
 public:
-    FingerprintGenerator(const int window_size);
+    FingerprintGenerator(const int window_size, const int peak_number);
 
     std::unordered_map<int, std::vector<uint32_t>> genFP(const std::vector<std::vector<int>>& features) const;
 };
