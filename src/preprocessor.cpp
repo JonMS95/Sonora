@@ -16,11 +16,15 @@ static int getFileSampleRate(const std::string& file_path)
     return sf_info.samplerate;
 }
 
-Preprocessor::Preprocessor(const std::string& file_path, const float downsmp_freq, const int fir_coefs)
-    : fir_filter_(FIRFilter(0.5 * downsmp_freq / getFileSampleRate(file_path), fir_coefs)), downsmp_factor_(static_cast<int>(getFileSampleRate(file_path) / downsmp_freq)) {}
+Preprocessor::Preprocessor(const std::string& file_path, const float downsmp_freq, const int fir_coefs):
+    fir_filter_(FIRFilter(0.5 * downsmp_freq / getFileSampleRate(file_path), fir_coefs)),
+    downsmp_factor_(static_cast<int>(getFileSampleRate(file_path) / downsmp_freq))
+{}
 
-Preprocessor::Preprocessor(const int smp_rate, const float downsmp_freq, const int fir_coefs)
-    : fir_filter_(FIRFilter(0.5 * downsmp_freq / smp_rate, fir_coefs)), downsmp_factor_(static_cast<int>(smp_rate / downsmp_freq)) {}
+Preprocessor::Preprocessor(const int smp_rate, const float downsmp_freq, const int fir_coefs):
+    fir_filter_(FIRFilter(0.5 * downsmp_freq / smp_rate, fir_coefs)),
+    downsmp_factor_(static_cast<int>(smp_rate / downsmp_freq))
+{}
 
 // #include <iostream>
 
