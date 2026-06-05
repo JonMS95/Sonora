@@ -130,7 +130,7 @@ int DBHandler::_getOrCreateSongId(const std::string& song_name) const
 
 // #include <iostream>
 
-void DBHandler::insertFingerprints(const std::string& song_name, const std::unordered_map<int, std::vector<uint32_t>>& frame_hashes)
+void DBHandler::insertFingerprints(const std::string& song_name, const std::unordered_map<int, std::vector<uint32_t>>& frame_hashes) const
 {
     const int song_id = _getOrCreateSongId(song_name);
 

@@ -18,7 +18,7 @@ private:
 public:
     DBHandler(const std::string& db_path);
 
-    void insertFingerprints(const std::string& song_name, const std::unordered_map<int, std::vector<uint32_t>>& frame_hashes);
+    void insertFingerprints(const std::string& song_name, const std::unordered_map<int, std::vector<uint32_t>>& frame_hashes) const;
 };
 
 #endif
