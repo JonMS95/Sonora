@@ -1,5 +1,6 @@
 // #include <iostream>
 #include <vector>
+#include <string>
 #include "preprocessor.hpp"
 #include "spectral_analyzer.hpp"
 #include "fingerprint_generator.hpp"
@@ -9,7 +10,7 @@ int main(int argc, char** argv)
 {
     if(argc <= 2)
     {
-        std::cout << "Missing parameters" << std::endl;
+        // std::cout << "Missing parameters" << std::endl;
         return 1;
     }
 
