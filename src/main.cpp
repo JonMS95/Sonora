@@ -1,4 +1,4 @@
-#include <iostream>
+// #include <iostream>
 #include <vector>
 #include "preprocessor.hpp"
 #include "spectral_analyzer.hpp"
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
         db_path = std::string(argv[4]);
 
     const float frame_duration = 0.02;
-    const int feat_ratio = 5;
+    const int feat_ratio = 20;
 
     Preprocessor prep(std::string(input), downsmp_freq);
     std::vector<float> prep_signal = prep.preprocessData(input, output);
@@ -39,19 +39,20 @@ int main(int argc, char** argv)
     FingerprintGenerator fp_generator(10);
     std::unordered_map<int, std::vector<uint32_t>> hashes = fp_generator.genFP(features);
 
-    for(auto it = hashes.begin(); it != hashes.end(); it++)
-    {
-        std::cout << "[" << it->first  << "] (" << it->second.size() << " elements)" << std::endl;
+    // for(auto it = hashes.begin(); it != hashes.end(); it++)
+    // {
+    //     std::cout << "[" << it->first  << "] (" << it->second.size() << " elements)" << std::endl;
 
-        for(uint32_t& h : it->second)
-            std::cout << h << " ";
+    //     for(uint32_t& h : it->second)
+    //         std::cout << h << " ";
     
-        std::cout << std::endl;
+    //     std::cout << std::endl;
 
-        std::cout << "-------------------" << std::endl;
-    }
+    //     std::cout << "-------------------" << std::endl;
+    // }
 
     DBHandler db_handler(db_path);
+    db_handler.insertFingerprints(input, hashes);
 
     return 0;
 }
