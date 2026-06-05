@@ -80,3 +80,88 @@ void DBHandler::_createFingerprintsTable(void) const
     }
 }
 
+int DBHandler::_getOrCreateSongId(const std::string& song_name) const
+{
+    sqlite3_stmt* stmt = nullptr;
+    int ret;
+
+    const std::string& select_sql = "SELECT song_id FROM songs WHERE song_name = ?;";
+
+    ret = sqlite3_prepare_v2(db_, select_sql.c_str(), -1, &stmt, nullptr);
+
+    if(ret != SQLITE_OK)
+        throw std::runtime_error("Failed to operate select " + song_name + " song");
+    
+    sqlite3_bind_text(stmt, 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
+
+    ret = sqlite3_step(stmt);
+
+    if(ret == SQLITE_ROW)
+    {
+        int song_id = sqlite3_column_int(stmt, 0);
+        sqlite3_finalize(stmt);
+        
+        return song_id;
+    }
+
+    sqlite3_finalize(stmt);
+
+    const std::string& insert_sql = "INSERT INTO songs(song_name) VALUES (?);";
+
+    ret = sqlite3_prepare_v2(db_, insert_sql.c_str(), -1, &stmt, nullptr);
+
+    if (ret != SQLITE_OK)
+        throw std::runtime_error("Failed to prepare INSERT song");
+
+    sqlite3_bind_text(stmt, 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
+
+    ret = sqlite3_step(stmt);
+
+    if (ret != SQLITE_DONE)
+    {
+        sqlite3_finalize(stmt);
+        throw std::runtime_error("Failed to insert song");
+    }
+
+    sqlite3_finalize(stmt);
+
+    return static_cast<int>(sqlite3_last_insert_rowid(db_));
+}
+
+// #include <iostream>
+
+void DBHandler::insertFingerprints(const std::string& song_name, const std::unordered_map<int, std::vector<uint32_t>>& frame_hashes)
+{
+    const int song_id = _getOrCreateSongId(song_name);
+
+    const std::string& sql = "INSERT INTO fingerprints(hash, song_id, frame_idx) VALUES (?, ?, ?);";
+
+    sqlite3_stmt* stmt = nullptr;
+
+    if (sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+        throw std::runtime_error("Failed to prepare insert statement");
+
+    // int cnt = 0;
+
+    for (const auto& [frame_idx, hashes] : frame_hashes)
+    {
+        for (uint32_t hash : hashes)
+        {
+            sqlite3_bind_int(stmt, 1, static_cast<int>(hash));
+            sqlite3_bind_int(stmt, 2, song_id);
+            sqlite3_bind_int(stmt, 3, frame_idx);
+
+            if (sqlite3_step(stmt) != SQLITE_DONE)
+            {
+                sqlite3_finalize(stmt);
+                throw std::runtime_error("Failed to insert fingerprint");
+            }
+
+            sqlite3_reset(stmt);
+        
+            // std::cout << "Reg added: " << cnt++ << std::endl;
+        }
+    }
+
+    sqlite3_finalize(stmt);
+}
