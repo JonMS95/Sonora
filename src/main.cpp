@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     SpectralAnalyzer spectral_analyzer(frame_duration, downsmp_freq, feat_ratio);
     std::vector<std::vector<int>> features = spectral_analyzer.analyze(prep_signal);
 
-    FingerprintGenerator fp_generator(10);
+    FingerprintGenerator fp_generator(5, 3);
     std::unordered_map<int, std::vector<uint32_t>> hashes = fp_generator.genFP(features);
 
     // for(auto it = hashes.begin(); it != hashes.end(); it++)
