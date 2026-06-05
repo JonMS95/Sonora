@@ -22,6 +22,8 @@ Preprocessor::Preprocessor(const std::string& file_path, const float downsmp_fre
 Preprocessor::Preprocessor(const int smp_rate, const float downsmp_freq, const int fir_coefs)
     : fir_filter_(FIRFilter(0.5 * downsmp_freq / smp_rate, fir_coefs)), downsmp_factor_(static_cast<int>(smp_rate / downsmp_freq)) {}
 
+// #include <iostream>
+
 std::vector<float> Preprocessor::_read(const std::string& file_path)
 {
     SNDFILE* file = sf_open(file_path.c_str(), SFM_READ, &sf_info_);
@@ -29,9 +31,9 @@ std::vector<float> Preprocessor::_read(const std::string& file_path)
     if (!file)
         throw std::runtime_error("Provided file (" + file_path + ") was not found");
 
-    std::cout << "Sample rate: "    << sf_info_.samplerate  << "\n";
-    std::cout << "Channels: "       << sf_info_.channels    << "\n";
-    std::cout << "Frames: "         << sf_info_.frames      << "\n";
+    // std::cout << "Sample rate: "    << sf_info_.samplerate  << "\n";
+    // std::cout << "Channels: "       << sf_info_.channels    << "\n";
+    // std::cout << "Frames: "         << sf_info_.frames      << "\n";
 
     std::vector<float> ret(sf_info_.frames * sf_info_.channels);
 

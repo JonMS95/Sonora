@@ -57,7 +57,7 @@ std::vector<std::vector<int>> SpectralAnalyzer::_feats(std::vector<std::vector<f
     return ret;
 }
 
-#include <iostream>
+// #include <iostream>
 
 std::vector<std::vector<int>> SpectralAnalyzer::analyze(std::vector<float>& signal)
 {
@@ -65,17 +65,17 @@ std::vector<std::vector<int>> SpectralAnalyzer::analyze(std::vector<float>& sign
     _hann(split_signal);
     std::vector<std::vector<int>> ret = _feats(split_signal);
     
-    int counter = 0;
+    // int counter = 0;
 
-    for(const std::vector<int>& vi : ret)
-    {
-        std::cout << counter++ << ": ";
+    // for(const std::vector<int>& vi : ret)
+    // {
+    //     std::cout << counter++ << ": ";
 
-        for(const int& i : vi)
-            std::cout << i << "\t" << " ";
+    //     for(const int& i : vi)
+    //         std::cout << i << "\t" << " ";
     
-        std::cout << std::endl;
-    }
+    //     std::cout << std::endl;
+    // }
 
     return ret;
 }
