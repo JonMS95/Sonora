@@ -6,3 +6,7 @@ Execute:
 
 Debug:
 gdb --args ./exe/main /home/jon/Desktop/miralo.wav /home/jon/Desktop/miralo_mono_filtered.wav 8000 /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db
+
+Check database content:
+sqlite3 dat/fingerprints.db -table "SELECT * FROM fingerprints WHERE frame_idx = 100 LIMIT 10;"
+
