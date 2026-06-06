@@ -1,19 +1,20 @@
 #include <vector>
 #include <cmath>
+#include <cstddef>
 #include "fir_filter.hpp"
 
 /// @brief Creates a basic FIR filter.
 /// @param size Number of weights.
 /// @param cutoff Cutoff coefficient value, calculated as: 0.5 * (desired cutoff frequency) / (original maximum or sampling frequency).
 /// @return A vectorwith FIR filter coefficients.
-FIRFilter::FIRFilter(const float cutoff, const int size): kernel_(std::vector<float>(size))
+FIRFilter::FIRFilter(const float cutoff, const std::size_t filter_size): kernel_(std::vector<float>(filter_size))
 {
-    int M = size / 2;
+    std::size_t M = filter_size / 2;
     float sum = 0.0f;
 
-    for (int n = 0; n < size; n++)
+    for (std::size_t n = 0; n < filter_size; n++)
     {
-        int x = n - M;
+        std::size_t x = n - M;
 
         // normalized cutoff (0..0.5)
         float fc = cutoff;
@@ -23,7 +24,7 @@ FIRFilter::FIRFilter(const float cutoff, const int size): kernel_(std::vector<fl
             : sinf(2.0f * M_PI * fc * x) / (M_PI * x);
 
         // Hann window
-        float window = 0.5f - 0.5f * cosf(2.0f * M_PI * n / (size - 1));
+        float window = 0.5f - 0.5f * cosf(2.0f * M_PI * n / (filter_size - 1));
 
         kernel_[n] = sinc * window;
         sum += kernel_[n];
@@ -42,17 +43,20 @@ std::vector<float> FIRFilter::applyFIR(const std::vector<float>& signal) const
 {
     std::vector<float> out(signal.size());
 
-    int N = signal.size();
-    int K = kernel_.size();
-    int M = K / 2;
+    std::size_t N = signal.size();
+    std::size_t K = kernel_.size();
+    std::size_t M = K / 2;
 
-    for (int i = 0; i < N; i++)
+    float acc; // Cumulative counter.
+    std::size_t idx;
+
+    for (std::size_t i = 0; i < N; i++)
     {
-        float acc = 0.0f;
+        acc = 0.0f;
 
-        for (int j = 0; j < K; j++)
+        for (std::size_t j = 0; j < K; j++)
         {
-            int idx = i + j - M;
+            idx = i + j - M;
 
             if (idx >= 0 && idx < N)
                 acc += signal[idx] * kernel_[j];
