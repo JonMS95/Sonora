@@ -1,5 +1,7 @@
 #include <string>
 #include <vector>
+#include <cstddef>
+#include <stdexcept>
 #include <sndfile.h>
 #include "preprocessor.hpp"
 
@@ -16,14 +18,24 @@ static int getFileSampleRate(const std::string& file_path)
     return sf_info.samplerate;
 }
 
-Preprocessor::Preprocessor(const std::string& file_path, const float downsmp_freq, const int fir_coefs):
-    fir_filter_(FIRFilter(0.5 * downsmp_freq / getFileSampleRate(file_path), fir_coefs)),
-    downsmp_factor_(static_cast<int>(getFileSampleRate(file_path) / downsmp_freq))
+static float calcFIRFiterCutoff(const uint32_t smp_rate, const uint32_t downsmp_freq)
+{
+    return (0.5 * static_cast<float>(downsmp_freq) / smp_rate);
+}
+
+static float calcFIRFiterCutoff(const uint32_t downsmp_freq, const std::string& file_path)
+{
+    return (0.5 * static_cast<float>(downsmp_freq) / getFileSampleRate(file_path));
+}
+
+Preprocessor::Preprocessor(const std::string& file_path, const uint32_t downsmp_freq, const std::size_t fir_coefs):
+    fir_filter_(FIRFilter(calcFIRFiterCutoff(downsmp_freq, file_path), fir_coefs)),
+    downsmp_factor_(static_cast<std::size_t>(getFileSampleRate(file_path) / downsmp_freq))
 {}
 
-Preprocessor::Preprocessor(const int smp_rate, const float downsmp_freq, const int fir_coefs):
-    fir_filter_(FIRFilter(0.5 * downsmp_freq / smp_rate, fir_coefs)),
-    downsmp_factor_(static_cast<int>(smp_rate / downsmp_freq))
+Preprocessor::Preprocessor(const uint32_t smp_rate, const uint32_t downsmp_freq, const std::size_t fir_coefs):
+    fir_filter_(FIRFilter(calcFIRFiterCutoff(smp_rate, downsmp_freq), fir_coefs)),
+    downsmp_factor_(static_cast<std::size_t>(smp_rate / downsmp_freq))
 {}
 
 // #include <iostream>
@@ -50,8 +62,8 @@ std::vector<float> Preprocessor::_read(const std::string& file_path)
 
 std::vector<float> Preprocessor::_mono(const std::vector<float>& signal)
 {
-    const int n_samples = static_cast<int>(signal.size());
-    const int n_channels = sf_info_.channels;
+    const std::size_t n_samples     = signal.size();
+    const std::size_t n_channels    = sf_info_.channels;
 
     if(!n_channels)
         throw std::runtime_error("Number of channels cannot be zero");
@@ -59,15 +71,16 @@ std::vector<float> Preprocessor::_mono(const std::vector<float>& signal)
     if(n_samples % n_channels)
         throw std::runtime_error("Incomplete frames have been found");
 
-    const int num_of_frames = n_samples / n_channels;
+    const std::size_t num_of_frames = n_samples / n_channels;
 
     std::vector<float> ret(num_of_frames);
 
-    for (sf_count_t i = 0; i < num_of_frames; i++)
+    float sum;
+    for (std::size_t i = 0; i < num_of_frames; i++)
     {
-        float sum = 0.0f;
+        sum = 0.0f;
 
-        for (int c = 0; c < n_channels; c++)
+        for (std::size_t c = 0; c < n_channels; c++)
             sum += signal[i * n_channels + c];
 
         ret[i] = sum / n_channels;
