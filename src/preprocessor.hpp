@@ -8,7 +8,7 @@ class Preprocessor
 {
 private:
     FIRFilter fir_filter_;
-    const std::size_t downsmp_factor_;
+    const uint32_t downsmp_freq_;
     SF_INFO sf_info_;
 
     std::vector<float>  _read(const std::string& file_path);

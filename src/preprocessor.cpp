@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <sndfile.h>
+#include <samplerate.h>
 #include "preprocessor.hpp"
 
 static int getFileSampleRate(const std::string& file_path)
@@ -30,12 +31,12 @@ static float calcFIRFiterCutoff(const uint32_t downsmp_freq, const std::string& 
 
 Preprocessor::Preprocessor(const std::string& file_path, const uint32_t downsmp_freq, const std::size_t fir_coefs):
     fir_filter_(FIRFilter(calcFIRFiterCutoff(downsmp_freq, file_path), fir_coefs)),
-    downsmp_factor_(static_cast<std::size_t>(getFileSampleRate(file_path) / downsmp_freq))
+    downsmp_freq_(downsmp_freq)
 {}
 
 Preprocessor::Preprocessor(const uint32_t smp_rate, const uint32_t downsmp_freq, const std::size_t fir_coefs):
     fir_filter_(FIRFilter(calcFIRFiterCutoff(smp_rate, downsmp_freq), fir_coefs)),
-    downsmp_factor_(static_cast<std::size_t>(smp_rate / downsmp_freq))
+    downsmp_freq_(downsmp_freq)
 {}
 
 // #include <iostream>
@@ -98,14 +99,28 @@ std::vector<float> Preprocessor::_filter(const std::vector<float>& signal) const
 
 std::vector<float> Preprocessor::_downsample(const std::vector<float>& signal)
 {
-    std::vector<float> ret;
+    const double ratio = static_cast<double>(downsmp_freq_) / static_cast<double>(sf_info_.samplerate);
 
-    ret.reserve(signal.size() / downsmp_factor_);
+    SRC_DATA data;
 
-    for (std::size_t i = 0; i < signal.size(); i += downsmp_factor_)
-        ret.push_back(signal[i]);
+    data.data_in = signal.data();
+    data.input_frames = static_cast<long>(signal.size());
+    data.src_ratio = ratio;
+    data.end_of_input = 1;
 
-    sf_info_.samplerate /= downsmp_factor_;
+    std::vector<float> ret(signal.size() * ratio + 1);
+    
+    data.data_out = ret.data();
+    data.output_frames = static_cast<long>(ret.size());
+
+    SRC_STATE* state = src_new(SRC_SINC_BEST_QUALITY, 1, nullptr);
+
+    src_process(state, &data);
+    src_delete(state);
+
+    ret.resize(data.output_frames_gen);
+
+    sf_info_.samplerate = downsmp_freq_;
 
     return ret;
 }
