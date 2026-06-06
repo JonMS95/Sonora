@@ -17,13 +17,12 @@ int main(int argc, char** argv)
     const std::string& input    = std::string(argv[1]);
     const std::string& output   = std::string(argv[2]);
     
-    float downsmp_freq = 8000;
-    char* end;
+    uint32_t downsmp_freq = 8000;
 
     std::string db_path = std::string("fingerprints.db");
 
     if(argc > 3)
-        downsmp_freq = strtof(argv[3], &end);
+        downsmp_freq = atoi(argv[3]);
     
     if(argc > 4)
         db_path = std::string(argv[4]);
@@ -35,22 +34,10 @@ int main(int argc, char** argv)
     std::vector<float> prep_signal = prep.preprocessData(input, output);
 
     SpectralAnalyzer spectral_analyzer(frame_duration, downsmp_freq, feat_ratio);
-    std::vector<std::vector<int>> features = spectral_analyzer.analyze(prep_signal);
+    std::vector<std::vector<std::size_t>> features = spectral_analyzer.analyze(prep_signal);
 
-    FingerprintGenerator fp_generator(5, 3);
-    std::unordered_map<int, std::vector<uint32_t>> hashes = fp_generator.genFP(features);
-
-    // for(auto it = hashes.begin(); it != hashes.end(); it++)
-    // {
-    //     std::cout << "[" << it->first  << "] (" << it->second.size() << " elements)" << std::endl;
-
-    //     for(uint32_t& h : it->second)
-    //         std::cout << h << " ";
-    
-    //     std::cout << std::endl;
-
-    //     std::cout << "-------------------" << std::endl;
-    // }
+    FingerprintGenerator fp_generator(3, 3);
+    std::unordered_map<std::size_t, std::vector<uint32_t>> hashes = fp_generator.genFP(features);
 
     DBHandler db_handler(db_path);
     db_handler.insertFingerprints(input, hashes);

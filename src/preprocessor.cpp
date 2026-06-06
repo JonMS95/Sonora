@@ -6,7 +6,7 @@
 #include <samplerate.h>
 #include "preprocessor.hpp"
 
-static int getFileSampleRate(const std::string& file_path)
+int Preprocessor::getFileSampleRate(const std::string& file_path)
 {
     SF_INFO sf_info;
     SNDFILE* file = sf_open(file_path.c_str(), SFM_READ, &sf_info);
@@ -26,15 +26,19 @@ static float calcFIRFiterCutoff(const uint32_t smp_rate, const uint32_t downsmp_
 
 static float calcFIRFiterCutoff(const uint32_t downsmp_freq, const std::string& file_path)
 {
-    return (0.5 * static_cast<float>(downsmp_freq) / getFileSampleRate(file_path));
+    return (0.5 * static_cast<float>(downsmp_freq) / Preprocessor::getFileSampleRate(file_path));
 }
 
-Preprocessor::Preprocessor(const std::string& file_path, const uint32_t downsmp_freq, const std::size_t fir_coefs):
+Preprocessor::Preprocessor( const std::string& file_path,
+                            const uint32_t downsmp_freq ,
+                            const std::size_t fir_coefs ):
     fir_filter_(FIRFilter(calcFIRFiterCutoff(downsmp_freq, file_path), fir_coefs)),
     downsmp_freq_(downsmp_freq)
 {}
 
-Preprocessor::Preprocessor(const uint32_t smp_rate, const uint32_t downsmp_freq, const std::size_t fir_coefs):
+Preprocessor::Preprocessor( const uint32_t smp_rate     ,
+                            const uint32_t downsmp_freq ,
+                            const std::size_t fir_coefs ):
     fir_filter_(FIRFilter(calcFIRFiterCutoff(smp_rate, downsmp_freq), fir_coefs)),
     downsmp_freq_(downsmp_freq)
 {}
@@ -47,10 +51,6 @@ std::vector<float> Preprocessor::_read(const std::string& file_path)
 
     if (!file)
         throw std::runtime_error("Provided file (" + file_path + ") was not found");
-
-    // std::cout << "Sample rate: "    << sf_info_.samplerate  << "\n";
-    // std::cout << "Channels: "       << sf_info_.channels    << "\n";
-    // std::cout << "Frames: "         << sf_info_.frames      << "\n";
 
     std::vector<float> ret(sf_info_.frames * sf_info_.channels);
 
