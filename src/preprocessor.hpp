@@ -1,6 +1,7 @@
 #ifndef PREPROCESSOR_HPP
 #define PREPROCESSOR_HPP
 
+#include <string>
 #include <cstddef>
 #include <sndfile.h>
 #include "fir_filter.hpp"
