@@ -1,10 +1,11 @@
 // #include <iostream>
 #include <vector>
 #include <string>
-#include "preprocessor.hpp"
-#include "spectral_analyzer.hpp"
-#include "fingerprint_generator.hpp"
-#include "db_handler.hpp"
+// #include "preprocessor.hpp"
+// #include "spectral_analyzer.hpp"
+// #include "fingerprint_generator.hpp"
+// #include "db_handler.hpp"
+#include "audio_indexer.hpp"
 
 int main(int argc, char** argv)
 {
@@ -27,20 +28,8 @@ int main(int argc, char** argv)
     if(argc > 4)
         db_path = std::string(argv[4]);
 
-    const float frame_duration = 0.02;
-    const int feat_ratio = 20;
-
-    Preprocessor prep(std::string(input), downsmp_freq);
-    std::vector<float> prep_signal = prep.preprocessData(input, output);
-
-    SpectralAnalyzer spectral_analyzer(frame_duration, downsmp_freq, feat_ratio);
-    std::vector<std::vector<std::size_t>> features = spectral_analyzer.analyze(prep_signal);
-
-    FingerprintGenerator fp_generator(3, 3);
-    std::unordered_map<std::size_t, std::vector<uint32_t>> hashes = fp_generator.genFP(features);
-
-    DBHandler db_handler(db_path);
-    db_handler.insertFingerprints(input, hashes);
+    AudioIndexer audio_indexer(downsmp_freq, db_path);
+    audio_indexer.index(input, output);
 
     return 0;
 }
