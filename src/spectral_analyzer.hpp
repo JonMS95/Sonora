@@ -19,9 +19,9 @@ private:
     std::vector<std::vector<std::size_t>>   _feats(std::vector<std::vector<float>>& split_signal)       ;
 
 public:
-    SpectralAnalyzer(   const float frame_duration          ,
-                        const uint32_t sampling_frequency   ,
-                        const uint32_t feature_ratio        );
+    explicit SpectralAnalyzer(  const float frame_duration          ,
+                                const uint32_t sampling_frequency   ,
+                                const uint32_t feature_ratio        );
 
     std::vector<std::vector<std::size_t>> analyze(std::vector<float>& signal);
 };
