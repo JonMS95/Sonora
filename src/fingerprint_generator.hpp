@@ -21,7 +21,7 @@ private:
                                                 const std::size_t idx_b) const;
 
 public:
-    FingerprintGenerator(const uint8_t window_size, const uint8_t peak_number);
+    explicit FingerprintGenerator(const uint8_t window_size, const uint8_t peak_number);
 
     std::unordered_map<std::size_t, std::vector<uint32_t>> genFP(const std::vector<std::vector<std::size_t>>& features) const;
 };
