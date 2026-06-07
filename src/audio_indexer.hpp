@@ -4,12 +4,12 @@
 #include <cstddef>
 #include <unordered_map>
 #include "audio_base.hpp"
-#include "db_handler.hpp"
+#include "audio_db_indexer.hpp"
 
 class AudioIndexer : public AudioBase
 {
 private:
-    DBHandler db_handler_; // Unique
+    AudioDBIndexer audio_db_indexer_; // Unique
 
 public:
     explicit AudioIndexer(  const uint32_t downsmp_freq             ,
