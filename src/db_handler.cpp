@@ -34,7 +34,7 @@ DBHandler::DBHandler(const std::string& db_path): db_(nullptr)
 
 void DBHandler::_createSongsTable(void) const
 {
-    const char* table_sql =
+    const std::string& table_sql =
         "CREATE TABLE IF NOT EXISTS songs"
         "("
             "song_id INTEGER PRIMARY KEY,"
@@ -43,7 +43,7 @@ void DBHandler::_createSongsTable(void) const
 
     char* err = nullptr;
 
-    if (sqlite3_exec(db_, table_sql, nullptr, nullptr, &err) != SQLITE_OK)
+    if (sqlite3_exec(db_, table_sql.c_str(), nullptr, nullptr, &err) != SQLITE_OK)
     {
         std::string msg = err ? err : "unknown error";
         sqlite3_free(err);
@@ -53,7 +53,7 @@ void DBHandler::_createSongsTable(void) const
 
 void DBHandler::_createFingerprintsTable(void) const
 {
-    const char* table_sql =
+    const std::string& table_sql =
         "CREATE TABLE IF NOT EXISTS fingerprints"
         "("
             "hash INTEGER NOT NULL,"
@@ -61,19 +61,19 @@ void DBHandler::_createFingerprintsTable(void) const
             "frame_idx INTEGER NOT NULL"
         ");";
 
-    const char* index_sql =
+    const std::string& index_sql =
         "CREATE INDEX IF NOT EXISTS idx_hash ON fingerprints(hash);";
 
     char* err = nullptr;
 
-    if(sqlite3_exec(db_, table_sql, nullptr, nullptr, &err) != SQLITE_OK)
+    if(sqlite3_exec(db_, table_sql.c_str(), nullptr, nullptr, &err) != SQLITE_OK)
     {
         std::string msg = err ? err : "unknown error";
         sqlite3_free(err);
         throw std::runtime_error("fingerprints table creation failed: " + msg);
     }
 
-    if(sqlite3_exec(db_, index_sql, nullptr, nullptr, &err) != SQLITE_OK)
+    if(sqlite3_exec(db_, index_sql.c_str(), nullptr, nullptr, &err) != SQLITE_OK)
     {
         std::string msg = err ? err : "unknown error";
         sqlite3_free(err);
@@ -83,48 +83,38 @@ void DBHandler::_createFingerprintsTable(void) const
 
 uint32_t DBHandler::_getOrCreateSongId(const std::string& song_name) const
 {
-    sqlite3_stmt* stmt = nullptr;
-    int ret_code;
-
     const std::string& select_sql = "SELECT song_id FROM songs WHERE song_name = ?;";
 
-    ret_code = sqlite3_prepare_v2(db_, select_sql.c_str(), -1, &stmt, nullptr);
+    sqlite3_stmt* raw_stmt = nullptr;
 
-    if(ret_code != SQLITE_OK)
-        throw std::runtime_error("Failed to operate select " + song_name + " song");
-    
-    sqlite3_bind_text(stmt, 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_prepare_v2(db_, select_sql.c_str(), -1, &raw_stmt, nullptr);
+    if (rc != SQLITE_OK)
+        throw std::runtime_error("Failed SELECT");
 
-    ret_code = sqlite3_step(stmt);
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>
+        stmt(raw_stmt, &sqlite3_finalize);
 
-    if(ret_code == SQLITE_ROW)
-    {
-        uint32_t song_id = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);
-        
-        return song_id;
-    }
+    sqlite3_bind_text(stmt.get(), 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
 
-    sqlite3_finalize(stmt);
+    rc = sqlite3_step(stmt.get());
+    if (rc == SQLITE_ROW)
+        return static_cast<uint32_t>(sqlite3_column_int(stmt.get(), 0));
 
-    const std::string& insert_sql = "INSERT INTO songs(song_name) VALUES (?);";
+    const std::string insert_sql = "INSERT INTO songs(song_name) VALUES (?);";
 
-    ret_code = sqlite3_prepare_v2(db_, insert_sql.c_str(), -1, &stmt, nullptr);
+    raw_stmt = nullptr;
 
-    if(ret_code != SQLITE_OK)
-        throw std::runtime_error("Failed to prepare INSERT song");
+    rc = sqlite3_prepare_v2(db_, insert_sql.c_str(), -1, &raw_stmt, nullptr);
+    if (rc != SQLITE_OK)
+        throw std::runtime_error("Failed INSERT");
 
-    sqlite3_bind_text(stmt, 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> insert_stmt(raw_stmt, &sqlite3_finalize);
 
-    ret_code = sqlite3_step(stmt);
+    sqlite3_bind_text(insert_stmt.get(), 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
 
-    if(ret_code != SQLITE_DONE)
-    {
-        sqlite3_finalize(stmt);
-        throw std::runtime_error("Failed to insert song");
-    }
-
-    sqlite3_finalize(stmt);
+    rc = sqlite3_step(insert_stmt.get());
+    if (rc != SQLITE_DONE)
+        throw std::runtime_error("Failed insert song");
 
     return static_cast<uint32_t>(sqlite3_last_insert_rowid(db_));
 }
@@ -137,10 +127,12 @@ void DBHandler::insertFingerprints(const std::string& song_name, const std::unor
 
     const std::string& sql = "INSERT INTO fingerprints(hash, song_id, frame_idx) VALUES (?, ?, ?);";
 
-    sqlite3_stmt* stmt = nullptr;
+    sqlite3_stmt* raw_stmt = nullptr;
 
-    if (sqlite3_prepare_v2(db_, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db_, sql.c_str(), -1, &raw_stmt, nullptr) != SQLITE_OK)
         throw std::runtime_error("Failed to prepare insert statement");
+    
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_stmt(raw_stmt, &sqlite3_finalize);
 
     // int cnt = 0;
 
@@ -148,21 +140,18 @@ void DBHandler::insertFingerprints(const std::string& song_name, const std::unor
     {
         for (uint32_t hash : hashes)
         {
-            sqlite3_bind_int(stmt, 1, hash);
-            sqlite3_bind_int(stmt, 2, song_id);
-            sqlite3_bind_int(stmt, 3, frame_idx);
+            sqlite3_bind_int(p_stmt.get(), 1, hash);
+            sqlite3_bind_int(p_stmt.get(), 2, song_id);
+            sqlite3_bind_int(p_stmt.get(), 3, frame_idx);
 
-            if (sqlite3_step(stmt) != SQLITE_DONE)
+            if (sqlite3_step(p_stmt.get()) != SQLITE_DONE)
             {
-                sqlite3_finalize(stmt);
                 throw std::runtime_error("Failed to insert fingerprint");
             }
 
-            sqlite3_reset(stmt);
+            sqlite3_reset(p_stmt.get());
         
             // std::cout << "Reg added: " << cnt++ << std::endl;
         }
     }
-
-    sqlite3_finalize(stmt);
 }
