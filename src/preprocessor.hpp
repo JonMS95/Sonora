@@ -15,7 +15,7 @@ private:
     std::vector<float>  _read(const std::string& file_path)                             ;
     std::vector<float>  _mono(const std::vector<float>& signal)                         ;
     std::vector<float>  _filter(const std::vector<float>& signal) const                 ;
-    std::vector<float>  _downsample(const std::vector<float>& signal)                   ;
+    std::vector<float>  _resample(const std::vector<float>& signal)                     ;
     void                _write(const std::vector<float>& signal, const std::string& s)  ;
 
 public:

@@ -96,7 +96,7 @@ std::vector<float> Preprocessor::_filter(const std::vector<float>& signal) const
     return fir_filter_.applyFIR(signal);
 }
 
-std::vector<float> Preprocessor::_downsample(const std::vector<float>& signal)
+std::vector<float> Preprocessor::_resample(const std::vector<float>& signal)
 {
     const double ratio = static_cast<double>(downsmp_freq_) / static_cast<double>(sf_info_.samplerate);
 
@@ -151,7 +151,7 @@ std::vector<float> Preprocessor::preprocessData(const std::string& input_path, c
     std::vector<float> raw      = _read(input_path);
     std::vector<float> mono     = _mono(raw);
     std::vector<float> filtered = _filter(mono);
-    std::vector<float> ret      = _downsample(filtered);
+    std::vector<float> ret      = _resample(filtered);
 
     if(!output_path.empty())
         _write(ret, output_path);
