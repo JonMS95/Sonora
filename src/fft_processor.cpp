@@ -33,22 +33,20 @@ static std::vector<std::size_t> initIndicesTemp(const float frame_duration, cons
 FFTProcessor::FFTProcessor( const float frame_duration          ,
                             const uint32_t sampling_frequency   ,
                             const uint32_t feature_ratio        ):
-    frame_ptr_(initFramePointer(frame_duration, sampling_frequency)),
+    frame_ptr_(initFramePointer(frame_duration, sampling_frequency), &fftwf_free),
     samples_in_frame_(SAMPLES_IN_FRAME(frame_duration, sampling_frequency)),
     feat_ratio_(feature_ratio), 
     sq_mags_(std::vector<float>(NUM_OF_BINS(frame_duration, sampling_frequency))),
     num_of_bins_(NUM_OF_BINS(frame_duration, sampling_frequency)),
     indices_(initIndicesTemp(frame_duration, sampling_frequency)),
-    fft_comp_(initFFTComplex(frame_duration, sampling_frequency))
+    fft_comp_(initFFTComplex(frame_duration, sampling_frequency), &fftwf_free)
 {
-    fft_plan_ = fftwf_plan_dft_r2c_1d(samples_in_frame_, frame_ptr_, fft_comp_, FFTW_ESTIMATE);
+    fft_plan_ = fftwf_plan_dft_r2c_1d(samples_in_frame_, frame_ptr_.get(), fft_comp_.get(), FFTW_ESTIMATE);
 }
 
 FFTProcessor::~FFTProcessor(void)
 {
     fftwf_destroy_plan(fft_plan_);
-    fftwf_free(frame_ptr_);
-    fftwf_free(fft_comp_);
 }
 
 std::vector<float> FFTProcessor::FFT(const std::vector<float>& frame)
@@ -56,14 +54,14 @@ std::vector<float> FFTProcessor::FFT(const std::vector<float>& frame)
     if(frame.size() != samples_in_frame_)
         throw std::runtime_error("Frame size mismatch in FFT");
 
-    std::memcpy(frame_ptr_, frame.data(), sizeof(float) * samples_in_frame_);
+    std::memcpy(frame_ptr_.get(), frame.data(), sizeof(float) * samples_in_frame_);
 
     fftwf_execute(fft_plan_);
 
     for (std::size_t k = 0; k < num_of_bins_; k++)
     {
-        float re = fft_comp_[k][0];
-        float im = fft_comp_[k][1];
+        float re = fft_comp_.get()[k][0];
+        float im = fft_comp_.get()[k][1];
 
         sq_mags_[k] = (re * re + im * im);
     }
