@@ -17,7 +17,7 @@ private:
     uint32_t _getOrCreateSongId(const std::string& song_name) const;
 
 public:
-    DBHandler(const std::string& db_path);
+    explicit DBHandler(const std::string& db_path);
 
     void insertFingerprints(const std::string& song_name, const std::unordered_map<std::size_t, std::vector<uint32_t>>& frame_hashes) const;
 };
