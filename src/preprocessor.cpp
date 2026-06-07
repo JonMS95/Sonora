@@ -1,20 +1,21 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <memory>
 #include <stdexcept>
 #include <sndfile.h>
 #include <samplerate.h>
 #include "preprocessor.hpp"
 
-int Preprocessor::getFileSampleRate(const std::string& file_path)
+uint32_t Preprocessor::getFileSampleRate(const std::string& file_path)
 {
-    SF_INFO sf_info;
-    SNDFILE* file = sf_open(file_path.c_str(), SFM_READ, &sf_info);
+    SF_INFO sf_info{};
 
-    if (!file)
+    // Create unique_ptr by providing data type and destructor method.
+    std::unique_ptr<SNDFILE, decltype(&sf_close)> p_file(sf_open(file_path.c_str(), SFM_READ, &sf_info), &sf_close);
+
+    if (!p_file)
         throw std::runtime_error("Provided file (" + file_path + ") was not found");
-
-    sf_close(file);
 
     return sf_info.samplerate;
 }
@@ -47,16 +48,14 @@ Preprocessor::Preprocessor( const uint32_t smp_rate     ,
 
 std::vector<float> Preprocessor::_read(const std::string& file_path)
 {
-    SNDFILE* file = sf_open(file_path.c_str(), SFM_READ, &sf_info_);
+    std::unique_ptr<SNDFILE, decltype(&sf_close)> p_file(sf_open(file_path.c_str(), SFM_READ, &sf_info_), &sf_close);
 
-    if (!file)
+    if (!p_file)
         throw std::runtime_error("Provided file (" + file_path + ") was not found");
 
     std::vector<float> ret(sf_info_.frames * sf_info_.channels);
 
-    sf_readf_float(file, ret.data(), sf_info_.frames);
-
-    sf_close(file);
+    sf_readf_float(p_file.get(), ret.data(), sf_info_.frames);
 
     return ret;
 }
@@ -101,24 +100,27 @@ std::vector<float> Preprocessor::_downsample(const std::vector<float>& signal)
 {
     const double ratio = static_cast<double>(downsmp_freq_) / static_cast<double>(sf_info_.samplerate);
 
-    SRC_DATA data;
-
+    SRC_DATA data{};
     data.data_in = signal.data();
     data.input_frames = static_cast<long>(signal.size());
     data.src_ratio = ratio;
     data.end_of_input = 1;
 
-    std::vector<float> ret(signal.size() * ratio + 1);
-    
+    std::vector<float> ret(static_cast<size_t>(signal.size() * ratio) + 1024);
+
     data.data_out = ret.data();
     data.output_frames = static_cast<long>(ret.size());
 
-    SRC_STATE* state = src_new(SRC_SINC_BEST_QUALITY, 1, nullptr);
+    std::unique_ptr<SRC_STATE, decltype(&src_delete)> state(src_new(SRC_SINC_BEST_QUALITY, 1, nullptr), &src_delete);
 
-    src_process(state, &data);
-    src_delete(state);
+    if (!state)
+        throw std::runtime_error("Failed to create SRC_STATE");
 
-    ret.resize(data.output_frames_gen);
+    int error = src_process(state.get(), &data);
+    if (error)
+        throw std::runtime_error(src_strerror(error));
+
+    ret.resize(static_cast<size_t>(data.output_frames_gen));
 
     sf_info_.samplerate = downsmp_freq_;
 
@@ -134,14 +136,12 @@ void Preprocessor::_write(const std::vector<float>& signal, const std::string& o
 
     sf_info_.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
 
-    SNDFILE* file = sf_open(output_path.c_str(), SFM_WRITE, &sf_info_);
+    std::unique_ptr<SNDFILE, decltype(&sf_close)> p_file(sf_open(output_path.c_str(), SFM_WRITE, &sf_info_), &sf_close);
 
-    if (!file)
+    if (!p_file)
         throw std::runtime_error("Cannot open output file");
 
-    sf_writef_float(file, signal.data(), signal.size() / n_channels);
-
-    sf_close(file);
+    sf_writef_float(p_file.get(), signal.data(), signal.size() / n_channels);
 }
 
 std::vector<float> Preprocessor::preprocessData(const std::string& input_path, const std::string& output_path)
