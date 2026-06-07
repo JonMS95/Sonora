@@ -19,16 +19,16 @@ private:
     void                _write(const std::vector<float>& signal, const std::string& s)  ;
 
 public:
-    Preprocessor(   const std::string& file_path        ,
-                    const uint32_t downsmp_freq = 8000.0,
-                    const std::size_t fir_coefs = 101   );
-    Preprocessor(   const uint32_t smp_rate             ,
-                    const uint32_t downsmp_freq = 8000.0,
-                    const std::size_t fir_coefs = 101   );
+    explicit Preprocessor(  const std::string& file_path        ,
+                            const uint32_t downsmp_freq = 8000.0,
+                            const std::size_t fir_coefs = 101   );
+    explicit Preprocessor(  const uint32_t smp_rate             ,
+                            const uint32_t downsmp_freq = 8000.0,
+                            const std::size_t fir_coefs = 101   );
 
     std::vector<float> preprocessData(const std::string& input_path, const std::string& output_path = "");
 
-    static int getFileSampleRate(const std::string& file_path);
+    static uint32_t getFileSampleRate(const std::string& file_path);
 };
 
 #endif
