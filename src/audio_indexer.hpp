@@ -3,21 +3,13 @@
 
 #include <cstddef>
 #include <unordered_map>
-#include "preprocessor.hpp"
-#include "spectral_analyzer.hpp"
-#include "fingerprint_generator.hpp"
+#include "audio_base.hpp"
 #include "db_handler.hpp"
 
-class AudioIndexer
+class AudioIndexer : public AudioBase
 {
 private:
-    const uint32_t downsmp_freq_;
-    const std::size_t fir_coefs_;
-
-    std::unordered_map<uint32_t, Preprocessor> preprocessor_map_;   // Unique per original sampling frequency.
-    SpectralAnalyzer spectral_analyzer_;                            // Unique
-    FingerprintGenerator fingerprint_generator_;                    // Unique
-    DBHandler db_handler_;                                          // Unique
+    DBHandler db_handler_; // Unique
 
 public:
     explicit AudioIndexer(  const uint32_t downsmp_freq             ,
