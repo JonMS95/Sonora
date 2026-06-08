@@ -23,7 +23,7 @@ void AudioDBIndexer::_createSongsTable(void) const
 
     char* err = nullptr;
 
-    if (sqlite3_exec(db_, table_sql.c_str(), nullptr, nullptr, &err) != SQLITE_OK)
+    if(sqlite3_exec(db_, table_sql.c_str(), nullptr, nullptr, &err) != SQLITE_OK)
     {
         std::string msg = err ? err : "unknown error";
         sqlite3_free(err);
@@ -93,7 +93,7 @@ uint32_t AudioDBIndexer::_getOrCreateSongId(const std::string& song_name) const
     sqlite3_bind_text(insert_stmt.get(), 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
 
     rc = sqlite3_step(insert_stmt.get());
-    if (rc != SQLITE_DONE)
+    if(rc != SQLITE_DONE)
         throw std::runtime_error("Failed insert song");
 
     return static_cast<uint32_t>(sqlite3_last_insert_rowid(db_));
@@ -107,25 +107,26 @@ void AudioDBIndexer::insertFingerprints(const std::string& song_name, const std:
 
     sqlite3_stmt* raw_stmt = nullptr;
 
-    if (sqlite3_prepare_v2(db_, sql.c_str(), -1, &raw_stmt, nullptr) != SQLITE_OK)
+    if(sqlite3_prepare_v2(db_, sql.c_str(), -1, &raw_stmt, nullptr) != SQLITE_OK)
         throw std::runtime_error("Failed to prepare insert statement");
     
     std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_stmt(raw_stmt, &sqlite3_finalize);
 
-    for (const auto& [frame_idx, hashes] : frame_hashes)
+    for(const auto& [frame_idx, hashes] : frame_hashes)
     {
-        for (uint32_t hash : hashes)
+        for(uint32_t hash : hashes)
         {
             sqlite3_bind_int(p_stmt.get(), 1, hash);
             sqlite3_bind_int(p_stmt.get(), 2, song_id);
             sqlite3_bind_int(p_stmt.get(), 3, frame_idx);
 
-            if (sqlite3_step(p_stmt.get()) != SQLITE_DONE)
+            if(sqlite3_step(p_stmt.get()) != SQLITE_DONE)
             {
                 throw std::runtime_error("Failed to insert fingerprint");
             }
 
             sqlite3_reset(p_stmt.get());
+            sqlite3_clear_bindings(p_stmt.get());
         }
     }
 }
