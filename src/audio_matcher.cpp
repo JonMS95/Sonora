@@ -13,7 +13,9 @@ AudioMatcher::AudioMatcher( const uint32_t downsmp_freq ,
     audio_db_matcher_(AudioDBMatcher(db_path))
 {}
 
-std::string AudioMatcher::match(const std::string& file_path) const
+std::string AudioMatcher::match(const std::string& file_path)
 {
-    return "";
+    const std::unordered_map<std::size_t, std::vector<uint32_t>> hashes = _getHashes(file_path);
+
+    return audio_db_matcher_.queryHashes(hashes);
 }
