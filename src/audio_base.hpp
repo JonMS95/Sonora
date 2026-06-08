@@ -20,7 +20,7 @@ private:
 protected:
     uint32_t _getAndCreatePreprocessor(const uint32_t sample_rate);
     uint32_t _getAndCreatePreprocessor(const std::string& file_path);
-    std::unordered_map<std::size_t, std::vector<uint32_t>> _getHashes(const std::string& file_path, const std::string& out_path);
+    std::unordered_map<std::size_t, std::vector<uint32_t>> _getHashes(const std::string& file_path, const std::string& out_path = "");
 
 public:
     explicit AudioBase( const uint32_t downsmp_freq     = 16000 ,
