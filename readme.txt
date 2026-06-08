@@ -15,3 +15,6 @@ sqlite3 dat/fingerprints.db -table "SELECT * FROM fingerprints WHERE frame_idx =
 
 Check output file sample rate (if any):
 ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=noprint_wrappers=1 file_name.wav
+
+Get some free samples:
+https://www.freesound.org/search/?s=Duration+%28shortest+first%29&f=category%3A%22Music%22&page=500#sound
