@@ -42,8 +42,18 @@ std::unordered_map<std::size_t, std::vector<uint32_t>> FingerprintGenerator::gen
     const std::size_t feat_size = features.size();
 
     for(std::size_t f_idx = 0; f_idx < feat_size; f_idx++)
+    {
+        if(features[f_idx].empty())
+            continue;
+
         for(std::size_t n_idx = (f_idx + 1); n_idx < std::min((f_idx + 1 + win_size_), feat_size); n_idx++)
+        {
+            if(features[n_idx].empty())
+                continue;
+
             ret[f_idx] = _genFramePairHashes(features, f_idx, n_idx);
+        }
+    }
 
     return ret;
 }
