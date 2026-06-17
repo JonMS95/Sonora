@@ -7,8 +7,17 @@ mkdir dat exe
 Compile:
 g++ -g -Wall src/*.cpp -lsamplerate -lsndfile -lm -lfftw3f -lsqlite3 -o exe/main
 
-Execute:
-./exe/main /home/jon/Desktop/test_sonora/in/miralo.wav /home/jon/Desktop/test_sonora/out/miralo.wav 8000 /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db
+Execute (index):
+./exe/main i /home/jon/Desktop/test_sonora/in/file.wav /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 2000 21 0.1 4 3 3
+
+Execute (match):
+./exe/main m /home/jon/Desktop/test_sonora/in/file.wav /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 2000 21 0.1 4 3 3
+
+Execute (many index ops):
+for file in $(ls /home/jon/Desktop/test_sonora/in/); do echo -e "----------\r\n${file}\r\n"; ./exe/main i /home/jon/Desktop/test_sonora/in/${file} /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 1000 21 0.1 4 3 3; echo -e "----------\r\n"; done
+
+Execute (many match ops):
+for file in $(ls /home/jon/Desktop/test_sonora/in/); do echo -e "----------\r\n${file}\r\n$(./exe/main m /home/jon/Desktop/test_sonora/in/${file} /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 1000 21 0.1 4 3 3)\r\n----------\r\n"; done
 
 Debug:
 gdb --args ./exe/main /home/jon/Desktop/test_sonora/in/miralo.wav /home/jon/Desktop/test_sonora/out/miralo.wav 8000 /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db
