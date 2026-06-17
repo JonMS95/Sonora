@@ -1,11 +1,8 @@
-// #include <iostream>
 #include <vector>
 #include <string>
-// #include "preprocessor.hpp"
-// #include "spectral_analyzer.hpp"
-// #include "fingerprint_generator.hpp"
-// #include "db_handler.hpp"
+#include <iostream>
 #include "audio_indexer.hpp"
+#include "audio_matcher.hpp"
 
 int main(int argc, char** argv)
 {
@@ -18,7 +15,7 @@ int main(int argc, char** argv)
     const std::string& input    = std::string(argv[1]);
     const std::string& output   = std::string(argv[2]);
     
-    uint32_t downsmp_freq = 8000;
+    uint32_t downsmp_freq = 16000;
 
     std::string db_path = std::string("fingerprints.db");
 
@@ -28,8 +25,17 @@ int main(int argc, char** argv)
     if(argc > 4)
         db_path = std::string(argv[4]);
 
-    AudioIndexer audio_indexer(downsmp_freq, db_path);
-    audio_indexer.index(input, output);
+    const std::size_t   fir_coefs       = 21;
+    const float         frame_duration  = 0.1f;
+    const uint32_t      feature_ratio   = 4;
+    const uint8_t       window_size     = 3;
+    const uint8_t       peak_number     = 3;
+
+    // AudioIndexer audio_indexer(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
+    // audio_indexer.index(input, output);
+
+    AudioMatcher audio_matcher(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
+    std::cout << audio_matcher.match(input) << std::endl;
 
     return 0;
 }
