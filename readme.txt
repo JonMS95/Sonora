@@ -1,6 +1,9 @@
 Install dependencies (if needed):
 sudo apt install libsamplerate0-dev libsndfile1-dev libfftw3-dev libsqlite3-dev
 
+Create directories:
+mkdir dat exe
+
 Compile:
 g++ -g -Wall src/*.cpp -lsamplerate -lsndfile -lm -lfftw3f -lsqlite3 -o exe/main
 
