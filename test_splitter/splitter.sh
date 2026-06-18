@@ -64,20 +64,21 @@ splitterSplitAudio()
     local HOP
     HOP=$(splitterFixFloat "$HOP_RAW")
 
-    echo "Input:        $INPUT"
-    echo "Output dir:   $OUT_DIR"
-    echo "Duration:     $DURATION sec"
-    echo "Window:       $WINDOW sec (1/$N)"
-    echo "Hop:          $HOP sec (window/$K)"
+    echo "Input:        ${INPUT}"
+    echo "Output dir:   ${OUT_DIR}"
+    echo "Duration:     ${DURATION} sec"
+    echo "Window:       ${WINDOW} sec (1/$N)"
+    echo "Hop:          ${HOP} sec (window/$K)"
     echo ""
 
     local INDEX=0
     local START="0"
 
-    while (( $(echo "$START + $WINDOW <= $DURATION" | bc -l) )); do
-
-        local OUTPUT
-        OUTPUT="${OUT_DIR}/${OUT_PREFIX}_$(printf "%03d" "$INDEX").wav"
+    while (( $(echo "$START + $WINDOW <= $DURATION" | bc -l) ));
+    do
+        local OUT_BASE=$(basename ${INPUT})
+        OUT_BASE=${OUT_BASE%*.wav}
+        local OUTPUT="${OUT_DIR}/${OUT_BASE}_${OUT_PREFIX}_$(printf "%03d" "$INDEX").wav"
 
         ffmpeg -hide_banner -loglevel error \
             -ss "$START"                    \
