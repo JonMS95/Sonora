@@ -39,9 +39,9 @@ multiSplitter()
             return 1
     fi
 
-    for file in  $(ls ${INPUT_DIR});
+    for file in $(ls ${INPUT_DIR});
     do
-        splitterSplitAudio ${file} ${OUT_DIR} ${OUT_PREFIX} ${N} ${K}
+        splitterSplitAudio "${INPUT_DIR}/${file}" "${OUT_DIR}" "${OUT_PREFIX}" "${N}" "${K}"
     done
 }
 
