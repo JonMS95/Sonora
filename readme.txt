@@ -17,7 +17,7 @@ Execute (many index ops):
 for file in $(ls /home/jon/Desktop/test_sonora/in/); do echo -e "----------\r\n${file}"; time ./exe/main i /home/jon/Desktop/test_sonora/in/${file} /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 1000 21 0.1 4 3 3; echo -e "----------\r\n"; done
 
 Execute (many match ops):
-for file in $(ls /home/jon/Desktop/test_sonora/in/); do echo -e "----------\r\n${file}\r\n$(basename $(./exe/main m /home/jon/Desktop/test_sonora/in/${file} /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 1000 21 0.1 4 3 3))\r\n----------\r\n"; done
+for file in $(ls /home/jon/Desktop/test_sonora/parts/); do echo -e "----------\r\n${file}\r\n$(basename $(./exe/main m /home/jon/Desktop/test_sonora/parts/${file} /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db 1000 21 0.1 4 3 3))\r\n----------\r\n"; done
 
 Debug:
 gdb --args ./exe/main /home/jon/Desktop/test_sonora/in/miralo.wav /home/jon/Desktop/test_sonora/out/miralo.wav 8000 /home/jon/Desktop/scripts/Sonora/dat/fingerprints.db
