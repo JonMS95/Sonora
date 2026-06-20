@@ -5,6 +5,7 @@
 #include "audio_db_base.hpp"
 #include "audio_db_indexer.hpp"
 
+#include <iostream>
 AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
                                 const uint32_t downsmp_freq ,
                                 const std::size_t fir_coefs ,
@@ -14,14 +15,47 @@ AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
                                 const uint8_t peak_number   ):
     AudioDBBase(db_path)
 {
-    _createParametersTable( downsmp_freq    ,
-                            fir_coefs       ,
-                            frame_duration  ,
-                            feature_ratio   ,
-                            window_size     ,
-                            peak_number     );
+    if(!_parametersTableExists())
+    {
+        std::cout << "Parameters table does not exist!" << std::endl;
+        _createParametersTable( downsmp_freq    ,
+                                fir_coefs       ,
+                                frame_duration  ,
+                                feature_ratio   ,
+                                window_size     ,
+                                peak_number     );
+    }
+    else
+    {
+        std::cout << "Parameters table WAS ALREADY THERE!" << std::endl;
+    //     _checkParametersTable( downsmp_freq    ,
+    //                             fir_coefs       ,
+    //                             frame_duration  ,
+    //                             feature_ratio   ,
+    //                             window_size     ,
+    //                             peak_number     );
+    }
+
     _createSongsTable();
     _createFingerprintsTable();
+}
+
+/// @brief Checks whether the parameters table (with a single record) exists.
+bool AudioDBIndexer::_parametersTableExists(void) const
+{
+    const std::string& select_sql = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'parameters';";
+
+    sqlite3_stmt* select_stmt = nullptr;
+
+    int rc = sqlite3_prepare_v2(db_, select_sql.c_str(), -1, &select_stmt, nullptr);
+    if (rc != SQLITE_OK)
+        throw std::runtime_error("Failed SELECT");
+
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_select_stmt(select_stmt, &sqlite3_finalize);
+
+    rc = sqlite3_step(p_select_stmt.get());        
+    
+    return (rc == SQLITE_ROW);
 }
 
 void AudioDBIndexer::_createParametersTable(const uint32_t downsmp_freq ,
@@ -131,8 +165,7 @@ uint32_t AudioDBIndexer::_getOrCreateSongId(const std::string& song_name) const
     if (rc != SQLITE_OK)
         throw std::runtime_error("Failed SELECT");
 
-    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>
-        stmt(raw_stmt, &sqlite3_finalize);
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> stmt(raw_stmt, &sqlite3_finalize);
 
     sqlite3_bind_text(stmt.get(), 1, song_name.c_str(), -1, SQLITE_TRANSIENT);
 
