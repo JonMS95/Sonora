@@ -17,6 +17,14 @@ protected:
                                 const uint8_t window_size   ,
                                 const uint8_t peak_number   ) const;
 
+    // Any derived class hould take parameters table into account.
+    virtual void _manageParametersTable(const uint32_t downsmp_freq ,
+                                        const std::size_t fir_coefs ,
+                                        const float frame_duration  ,
+                                        const uint32_t feature_ratio,
+                                        const uint8_t window_size   ,
+                                        const uint8_t peak_number   ) const = 0;
+
 public:
     explicit AudioDBBase(const std::string& db_path);
     virtual ~AudioDBBase(void);
