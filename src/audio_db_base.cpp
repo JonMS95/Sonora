@@ -89,7 +89,7 @@ void AudioDBBase::_checkParametersTable(const uint32_t downsmp_freq ,
     {
         auto make_comp_substr = [](const std::string& value_name, auto provided_value, auto db_value) -> std::string
         {
-            return std::string(value_name + ": got: " + std::to_string(provided_value) + ", expected: " + std::to_string(db_value));
+            return std::string(value_name + ": got: " + std::to_string(provided_value) + ", expected: " + std::to_string(db_value) + " (" + ((provided_value == db_value) ? "equal" : "differ") + ")");
         };
 
         const std::string re_str =  make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +  "\r\n" + 
