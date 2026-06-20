@@ -193,24 +193,37 @@ void AudioDBIndexer::insertFingerprints(const std::string& song_name, const std:
 
     if(sqlite3_prepare_v2(db_, sql.c_str(), -1, &raw_stmt, nullptr) != SQLITE_OK)
         throw std::runtime_error("Failed to prepare insert statement");
-    
+
     std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_stmt(raw_stmt, &sqlite3_finalize);
 
-    for(const auto& [frame_idx, hashes] : frame_hashes)
+    // Start transaction here.
+    sqlite3_exec(db_, "BEGIN;", nullptr, nullptr, nullptr);
+
+    try
     {
-        for(uint32_t hash : hashes)
+        for (const auto& [frame_idx, hashes] : frame_hashes)
         {
-            sqlite3_bind_int(p_stmt.get(), 1, hash);
-            sqlite3_bind_int(p_stmt.get(), 2, song_id);
-            sqlite3_bind_int(p_stmt.get(), 3, frame_idx);
-
-            if(sqlite3_step(p_stmt.get()) != SQLITE_DONE)
+            for (uint32_t hash : hashes)
             {
-                throw std::runtime_error("Failed to insert fingerprint");
-            }
+                sqlite3_bind_int(p_stmt.get(), 1, hash);
+                sqlite3_bind_int(p_stmt.get(), 2, song_id);
+                sqlite3_bind_int(p_stmt.get(), 3, frame_idx);
 
-            sqlite3_reset(p_stmt.get());
-            sqlite3_clear_bindings(p_stmt.get());
+                if (sqlite3_step(p_stmt.get()) != SQLITE_DONE)
+                    throw std::runtime_error("Failed to insert fingerprint");
+
+                sqlite3_reset(p_stmt.get());
+                sqlite3_clear_bindings(p_stmt.get());
+            }
         }
+
+        // If it succeeds, then send insert all elements.
+        sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, nullptr);
+    }
+    catch(const std::exception& e)
+    {
+        // Discard all insert statements so far.
+        sqlite3_exec(db_, "ROLLBACK;", nullptr, nullptr, nullptr);
+        throw std::runtime_error("Could not insert fingerprints");
     }
 }
