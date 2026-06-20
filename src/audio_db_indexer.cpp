@@ -5,11 +5,71 @@
 #include "audio_db_base.hpp"
 #include "audio_db_indexer.hpp"
 
-AudioDBIndexer::AudioDBIndexer(const std::string& db_path):
+AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
+                                const uint32_t downsmp_freq ,
+                                const std::size_t fir_coefs ,
+                                const float frame_duration  ,
+                                const uint32_t feature_ratio,
+                                const uint8_t window_size   ,
+                                const uint8_t peak_number   ):
     AudioDBBase(db_path)
 {
+    _createParametersTable( downsmp_freq    ,
+                            fir_coefs       ,
+                            frame_duration  ,
+                            feature_ratio   ,
+                            window_size     ,
+                            peak_number     );
     _createSongsTable();
     _createFingerprintsTable();
+}
+
+void AudioDBIndexer::_createParametersTable(const uint32_t downsmp_freq ,
+                                            const std::size_t fir_coefs ,
+                                            const float frame_duration  ,
+                                            const uint32_t feature_ratio,
+                                            const uint8_t window_size   ,
+                                            const uint8_t peak_number   ) const
+{
+    const std::string& table_sql =
+        "CREATE TABLE IF NOT EXISTS parameters"
+        "("
+            "downsmp_freq INTEGER,"
+            "fir_coefs INTEGER,"
+            "frame_duration REAL,"
+            "feature_ratio INTEGER,"
+            "window_size INTEGER,"
+            "peak_number INTEGER"
+        ");";
+
+    char* err = nullptr;
+
+    if(sqlite3_exec(db_, table_sql.c_str(), nullptr, nullptr, &err) != SQLITE_OK)
+    {
+        std::string msg = err ? err : "unknown error";
+        sqlite3_free(err);
+        throw std::runtime_error("params table creation failed: " + msg);
+    }
+
+    const std::string& insert_sql = "INSERT INTO parameters(downsmp_freq, fir_coefs, frame_duration, feature_ratio, window_size, peak_number) VALUES (?, ?, ?, ?, ?, ?);";
+
+    sqlite3_stmt* raw_insert_stmt = nullptr;
+
+    if(sqlite3_prepare_v2(db_, insert_sql.c_str(), -1, &raw_insert_stmt, nullptr) != SQLITE_OK)
+        throw std::runtime_error("Failed to prepare insert statement");
+    
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_insert_stmt(raw_insert_stmt, &sqlite3_finalize);
+
+    sqlite3_bind_int(   p_insert_stmt.get(), 1, downsmp_freq                        );
+    sqlite3_bind_int(   p_insert_stmt.get(), 2, fir_coefs                           );
+    sqlite3_bind_double(p_insert_stmt.get(), 3, static_cast<double>(frame_duration) );
+    sqlite3_bind_int(   p_insert_stmt.get(), 4, feature_ratio                       );
+    sqlite3_bind_int(   p_insert_stmt.get(), 5, window_size                         );
+    sqlite3_bind_int(   p_insert_stmt.get(), 6, peak_number                         );
+
+    int rc = sqlite3_step(p_insert_stmt.get());
+    if(rc != SQLITE_DONE)
+        throw std::runtime_error("Failed insert song");
 }
 
 void AudioDBIndexer::_createSongsTable(void) const

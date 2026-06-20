@@ -67,10 +67,10 @@ int main(int argc, char** argv)
         feature_ratio = atoi(argv[7]);
     
     if(argc >= 8)
-        window_size = atoi(argv[7]);
+        window_size = atoi(argv[8]);
 
     if(argc >= 9)
-        peak_number = atoi(argv[7]);
+        peak_number = atoi(argv[9]);
 
     if(index_match == 'i')
     {
