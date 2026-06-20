@@ -16,6 +16,7 @@ protected:
                                 const uint32_t feature_ratio,
                                 const uint8_t window_size   ,
                                 const uint8_t peak_number   ) const;
+    void _enableWAL(void) const;
 
     // Any derived class hould take parameters table into account.
     virtual void _manageParametersTable(const uint32_t downsmp_freq ,

@@ -17,6 +17,7 @@ AudioDBMatcher::AudioDBMatcher( const std::string& db_path,
                                 const uint8_t peak_number   ):
     AudioDBBase(db_path)
 {
+    AudioDBBase::_enableWAL();
     _manageParametersTable( downsmp_freq    ,
                             fir_coefs       ,
                             frame_duration  ,

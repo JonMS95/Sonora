@@ -102,3 +102,17 @@ void AudioDBBase::_checkParametersTable(const uint32_t downsmp_freq ,
         throw std::runtime_error(re_str);
     }
 }
+
+void AudioDBBase::_enableWAL(void) const
+{
+    char* err = nullptr;
+
+    int rc = sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &err);
+
+    if (rc != SQLITE_OK)
+    {
+        std::string msg = err ? err : "Unknown SQLite error";
+        sqlite3_free(err);
+        throw std::runtime_error("Failed to enable WAL: " + msg);
+    }
+}
