@@ -42,7 +42,7 @@ public:
                     const uint8_t max_match_ops     = 10    );
     
     bool index(const std::string& file_path);
-    std::string match(const std::string& file_path);
+    bool match(const std::string& file_path);
 };
 
 #endif
