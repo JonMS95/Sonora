@@ -34,3 +34,23 @@ Sonora::Sonora( const uint32_t downsmp_freq ,
     max_match_ops_(max_match_ops),
     index_ongoing_(false)
 {}
+
+bool Sonora::index(const std::string& file_path)
+{
+    if(static_cast<uint8_t>(index_requests_.size()) >= max_index_rqs_)
+        return false;
+    
+    index_requests_.push(file_path);
+
+    return true;
+}
+
+bool Sonora::match(const std::string& file_path)
+{
+    if(static_cast<uint8_t>(match_requests_.size()) >= max_match_rqs_)
+        return false;
+    
+    match_requests_.push(file_path);
+
+    return true;
+}
