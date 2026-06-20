@@ -28,7 +28,6 @@ public:
                             const std::size_t fir_coefs = 101   );
 
     std::vector<float> preprocessData(const std::string& input_path, const std::string& output_path = "");
-
     static uint32_t getFileSampleRate(const std::string& file_path);
 };
 

@@ -1,11 +1,8 @@
-#include <cstddef>
 #include <string>
-#include <vector>
-#include <unordered_map>
-#include "audio_base.hpp"
-#include "audio_indexer.hpp"
+#include "audio_db_matcher.hpp"
+#include "audio_matcher.hpp"
 
-AudioIndexer::AudioIndexer( const uint32_t downsmp_freq ,
+AudioMatcher::AudioMatcher( const uint32_t downsmp_freq ,
                             const std::string& db_path  ,
                             const std::size_t fir_coefs ,
                             const float frame_duration  ,
@@ -18,7 +15,7 @@ AudioIndexer::AudioIndexer( const uint32_t downsmp_freq ,
                 feature_ratio   ,
                 window_size     ,
                 peak_number     ),
-    audio_db_indexer_(AudioDBIndexer(   db_path         ,
+    audio_db_matcher_(AudioDBMatcher(   db_path         ,
                                         downsmp_freq    ,
                                         fir_coefs       ,
                                         frame_duration  ,
@@ -27,8 +24,9 @@ AudioIndexer::AudioIndexer( const uint32_t downsmp_freq ,
                                         peak_number     ))
 {}
 
-void AudioIndexer::index(const std::string& file_path, const std::string& out_path)
+std::string AudioMatcher::match(const std::string& file_path)
 {
-    const std::unordered_map<std::size_t, std::vector<uint32_t>> hashes = _getHashes(file_path, out_path);
-    audio_db_indexer_.insertFingerprints(file_path, hashes);
+    const std::unordered_map<std::size_t, std::vector<uint32_t>> hashes = _getHashes(file_path);
+
+    return audio_db_matcher_.queryHashes(hashes);
 }
