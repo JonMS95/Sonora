@@ -4,6 +4,7 @@
 #include <iostream>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"
+#include "sonora.hpp"
 
 int main(int argc, char** argv)
 {
@@ -82,6 +83,8 @@ int main(int argc, char** argv)
         AudioMatcher audio_matcher(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
         std::cout << audio_matcher.match(input) << std::endl;
     }
+
+    Sonora sonora(downsmp_freq, db_path);
     
     return 0;
 }
