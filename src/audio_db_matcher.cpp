@@ -8,9 +8,40 @@
 #include "audio_db_base.hpp"
 #include "audio_db_matcher.hpp"
 
-AudioDBMatcher::AudioDBMatcher(const std::string& db_path):
+AudioDBMatcher::AudioDBMatcher( const std::string& db_path,
+                                const uint32_t downsmp_freq ,
+                                const std::size_t fir_coefs ,
+                                const float frame_duration  ,
+                                const uint32_t feature_ratio,
+                                const uint8_t window_size   ,
+                                const uint8_t peak_number   ):
     AudioDBBase(db_path)
-{}
+{
+    _manageParametersTable( downsmp_freq    ,
+                            fir_coefs       ,
+                            frame_duration  ,
+                            feature_ratio   ,
+                            window_size     ,
+                            peak_number     );
+}
+
+void AudioDBMatcher::_manageParametersTable(const uint32_t downsmp_freq ,
+                                            const std::size_t fir_coefs ,
+                                            const float frame_duration  ,
+                                            const uint32_t feature_ratio,
+                                            const uint8_t window_size   ,
+                                            const uint8_t peak_number   ) const
+{
+    if(!AudioDBBase::_parametersTableExists())
+        throw std::runtime_error("No parameters table was found");
+        
+    AudioDBBase::_checkParametersTable( downsmp_freq    ,
+                                        fir_coefs       ,
+                                        frame_duration  ,
+                                        feature_ratio   ,
+                                        window_size     ,
+                                        peak_number     );
+}
 
 std::string AudioDBMatcher::_getSongName(const uint32_t song_id) const
 {
