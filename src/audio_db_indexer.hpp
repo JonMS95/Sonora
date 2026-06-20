@@ -17,6 +17,12 @@ private:
                                 const uint32_t feature_ratio,
                                 const uint8_t window_size   ,
                                 const uint8_t peak_number   ) const;
+    void _manageParametersTable(const uint32_t downsmp_freq ,
+                                const std::size_t fir_coefs ,
+                                const float frame_duration  ,
+                                const uint32_t feature_ratio,
+                                const uint8_t window_size   ,
+                                const uint8_t peak_number   ) const override;
     void _createSongsTable(void) const;
     void _createFingerprintsTable(void) const;
     uint32_t _getOrCreateSongId(const std::string& song_name) const;

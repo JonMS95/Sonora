@@ -15,21 +15,12 @@ AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
                                 const uint8_t peak_number   ):
     AudioDBBase(db_path)
 {
-    if(!AudioDBBase::_parametersTableExists())
-        _createParametersTable( downsmp_freq    ,
-                                fir_coefs       ,
-                                frame_duration  ,
-                                feature_ratio   ,
-                                window_size     ,
-                                peak_number     );
-    else
-        AudioDBBase::_checkParametersTable( downsmp_freq    ,
-                                            fir_coefs       ,
-                                            frame_duration  ,
-                                            feature_ratio   ,
-                                            window_size     ,
-                                            peak_number     );
-
+    _manageParametersTable( downsmp_freq    ,
+                            fir_coefs       ,
+                            frame_duration  ,
+                            feature_ratio   ,
+                            window_size     ,
+                            peak_number     );
     _createSongsTable();
     _createFingerprintsTable();
 }
@@ -80,6 +71,29 @@ void AudioDBIndexer::_createParametersTable(const uint32_t downsmp_freq ,
     int rc = sqlite3_step(p_insert_stmt.get());
     if(rc != SQLITE_DONE)
         throw std::runtime_error("Failed insert song");
+}
+
+void AudioDBIndexer::_manageParametersTable(const uint32_t downsmp_freq ,
+                                            const std::size_t fir_coefs ,
+                                            const float frame_duration  ,
+                                            const uint32_t feature_ratio,
+                                            const uint8_t window_size   ,
+                                            const uint8_t peak_number   ) const
+{
+    if(!AudioDBBase::_parametersTableExists())
+        _createParametersTable( downsmp_freq    ,
+                                fir_coefs       ,
+                                frame_duration  ,
+                                feature_ratio   ,
+                                window_size     ,
+                                peak_number     );
+    else
+        AudioDBBase::_checkParametersTable( downsmp_freq    ,
+                                            fir_coefs       ,
+                                            frame_duration  ,
+                                            feature_ratio   ,
+                                            window_size     ,
+                                            peak_number     );
 }
 
 void AudioDBIndexer::_createSongsTable(void) const
