@@ -11,13 +11,6 @@
 class AudioDBIndexer : public AudioDBBase
 {
 private:
-    bool _parametersTableExists(void) const;
-    // bool _checkParametersTable( const uint32_t downsmp_freq ,
-    //                             const std::size_t fir_coefs ,
-    //                             const float frame_duration  ,
-    //                             const uint32_t feature_ratio,
-    //                             const uint8_t window_size   ,
-    //                             const uint8_t peak_number   ) const;
     void _createParametersTable(const uint32_t downsmp_freq ,
                                 const std::size_t fir_coefs ,
                                 const float frame_duration  ,
