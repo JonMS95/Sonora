@@ -2,6 +2,8 @@
 #include <string>
 #include <cstdlib>
 #include <iostream>
+#include <chrono>
+#include <thread>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"
 #include "sonora.hpp"
@@ -73,18 +75,27 @@ int main(int argc, char** argv)
     if(argc >= 9)
         peak_number = atoi(argv[9]);
 
-    if(index_match == 'i')
-    {
-        AudioIndexer audio_indexer(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
-        audio_indexer.index(input);
-    }
-    else
-    {
-        AudioMatcher audio_matcher(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
-        std::cout << audio_matcher.match(input) << std::endl;
-    }
+    // if(index_match == 'i')
+    // {
+    //     AudioIndexer audio_indexer(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
+    //     audio_indexer.index(input);
+    // }
+    // else
+    // {
+    //     AudioMatcher audio_matcher(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
+    //     std::cout << audio_matcher.match(input) << std::endl;
+    // }
 
-    Sonora sonora(downsmp_freq, db_path);
-    
+    Sonora sonora(downsmp_freq, db_path, fir_coefs, frame_duration, feature_ratio, window_size, peak_number);
+
+    sonora.run();
+
+    if(index_match == 'i')
+        sonora.index(input);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    sonora.end();
+
     return 0;
 }
