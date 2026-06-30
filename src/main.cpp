@@ -91,9 +91,29 @@ int main(int argc, char** argv)
     sonora.run();
 
     if(index_match == 'i')
-        sonora.index(input);
+    {
+        // sonora.index(input);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout << "Indexing songs..." << std::endl;
+
+        // Use input as dir temporarily
+
+        sonora.index(input + "1148__walkerbelm__shirty.wav");
+        sonora.index(input + "118171__mikobuntu__9.wav");
+        sonora.index(input + "121039__thirsk__140-fx-bass-2.wav");
+        sonora.index(input + "167068__k0s__spiffy-spank.wav");
+        sonora.index(input + "243853__zuluonedrop__dm_70_drums_rub_a_dub.wav");
+
+        while(sonora.hasPendingIndexOps())
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    // else if(index_match == 'm')
+    //     sonora.index(input);
+    else
+    {
+        std::cerr << "Provide either \'i\' or \'m\' as first input parameter, no other" << std::endl;
+        return -1;
+    }
 
     sonora.end();
 
