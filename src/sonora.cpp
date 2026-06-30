@@ -17,7 +17,10 @@ Sonora::Sonora( const uint32_t downsmp_freq                 ,
                 const uint8_t window_size                   ,
                 const uint8_t peak_number                   ,
                 const uint64_t max_index_rqs                ,
-                const std::chrono::minutes index_expire_mins):
+                const std::chrono::minutes index_expire_mins,
+                const uint64_t max_match_rqs                ,
+                const std::chrono::minutes match_expire_mins,
+                const uint64_t max_match_threads            ):
     audio_indexer_(AudioIndexer(downsmp_freq    ,
                                 db_path         ,
                                 fir_coefs       ,
@@ -25,12 +28,27 @@ Sonora::Sonora( const uint32_t downsmp_freq                 ,
                                 feature_ratio   ,
                                 window_size     ,
                                 peak_number     )),
-    max_index_rqs_(max_index_rqs),
-    index_job_id_(0),
-    index_fsm_state_(INDEX_FSM_IDLE),
-    keep_index_running_(false),
-    index_expire_mins_(index_expire_mins)
-{}
+    max_index_rqs_(max_index_rqs)               ,
+    index_job_id_(0)                            ,
+    index_fsm_state_(INDEX_FSM_IDLE)            ,
+    keep_index_running_(false)                  ,
+    index_expire_mins_(index_expire_mins)       ,
+    audio_matcher_(AudioMatcher(downsmp_freq    ,
+                                db_path         ,
+                                fir_coefs       ,
+                                frame_duration  ,
+                                feature_ratio   ,
+                                window_size     ,
+                                peak_number     )),
+    max_match_rqs_(max_match_rqs)               ,
+    match_job_id_(0)                            ,
+    match_fsm_state_(MATCH_FSM_IDLE)            ,
+    keep_match_running_(false)                  ,
+    match_expire_mins_(match_expire_mins)       ,
+    match_thread_pool_(max_match_threads)
+{
+    match_thread_pool_.reserve(max_match_threads);
+}
 
 Sonora::~Sonora(void)
 {
@@ -98,6 +116,7 @@ void Sonora::_indexRoutine(void)
 {
     uint64_t job_id;
     std::string file_path;
+    index_rq_status_t index_result;
 
     while(keep_index_running_)
     {
@@ -127,13 +146,13 @@ void Sonora::_indexRoutine(void)
 
                 index_op_map_[job_id] = {.status = INDEX_OP_ONGOING};
 
-                index_fsm_state_ = INDEX_FSM_BUSY;
+                index_fsm_state_ = INDEX_FSM_INDEX;
             }
             break;
 
-            case INDEX_FSM_BUSY:
+            case INDEX_FSM_INDEX:
             {
-                index_rq_status_t index_result = INDEX_OP_OK;
+                index_result = INDEX_OP_OK;
 
                 try
                 {
@@ -145,6 +164,12 @@ void Sonora::_indexRoutine(void)
                     index_result = INDEX_OP_ERROR;
                 }
 
+                index_fsm_state_ = INDEX_FSM_SAVE;
+            }
+            break;
+
+            case INDEX_FSM_SAVE:
+            {
                 std::lock_guard<std::mutex> lock(mtx_index_);
                 index_op_map_[job_id] = {.status = index_result, .expire_time = std::chrono::steady_clock::now() + index_expire_mins_};
             
@@ -164,4 +189,16 @@ void Sonora::_indexRoutine(void)
 bool Sonora::hasPendingIndexOps(void)
 {
     return ( (index_fsm_state_ != INDEX_FSM_IDLE) || (!index_requests_.empty()) );
+}
+
+std::optional<uint64_t> Sonora::match(const std::string& file_path)
+{
+    // If queue is already full, then exit immediately.
+    if(static_cast<uint64_t>(match_requests_.size()) >= max_match_rqs_)
+        return std::nullopt;
+
+    uint64_t job_id = match_job_id_;
+
+    // // Check if job_id exists or not. If so, store its status.
+    // match_rq_status_t job_id_status = match_op_map_.count(job_id) ? index_op_map_.at(job_id).status : INDEX_OP_UNKNOWN;
 }
