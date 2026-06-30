@@ -28,25 +28,26 @@ Sonora::Sonora( const uint32_t downsmp_freq                 ,
     max_index_rqs_(max_index_rqs),
     index_job_id_(0),
     index_fsm_state_(INDEX_FSM_IDLE),
-    keep_running_(false),
+    keep_index_running_(false),
     index_expire_mins_(index_expire_mins)
 {}
 
 Sonora::~Sonora(void)
 {
-    if(keep_running_)
+    if(keep_index_running_)
         end();
 }
 
 void Sonora::run(void)
 {
-    keep_running_ = true;
+    keep_index_running_ = true;
     index_thread_ = std::thread(&Sonora::_indexRoutine, this);
 }
 
 void Sonora::end(void)
 {
-    keep_running_ = false;
+    keep_index_running_ = false;
+    cv_index_.notify_one();
     index_thread_.join();
 }
 
@@ -79,38 +80,59 @@ std::optional<uint64_t> Sonora::index(const std::string& file_path)
 
     index_job_id_ = (index_job_id_ == UINT64_MAX ? 0 : index_job_id_ + 1);
 
-    index_requests_.push({job_id, file_path});
-    index_op_map_[job_id].status = INDEX_OP_QUEUED;
+    // Init a scope so that the mutex is unlocked by itself.
+    {
+        std::lock_guard<std::mutex> index_lock(mtx_index_);
+
+        std::cout << "Adding song: " << file_path << std::endl;
+        index_requests_.push({job_id, file_path});
+        index_op_map_[job_id].status = INDEX_OP_QUEUED;
+    }
+
+    cv_index_.notify_one();
 
     return job_id;
 }
 
 void Sonora::_indexRoutine(void)
 {
-    while(keep_running_)
+    uint64_t job_id;
+    std::string file_path;
+
+    while(keep_index_running_)
     {
         switch (index_fsm_state_)
         {
             case INDEX_FSM_IDLE:
             {
-                if(index_requests_.empty())
+                // Wait for the condition variable to be raise (which will lead the current thread to be awakened).
+                std::unique_lock<std::mutex> lock(mtx_index_);
+
+                std::cout << "Waiting for cv to be awaken..." << std::endl;
+
+                cv_index_.wait(lock, [this] { return !index_requests_.empty() || !keep_index_running_; });
+
+                if(!keep_index_running_)
                 {
-                    std::this_thread::sleep_for(std::chrono::seconds(DEFAULT_SLEEP_SECS));
-                    continue;
+                    std::cout << "No longer indexing!!" << std::endl;
+                    break;
                 }
-                
+
+                job_id = index_requests_.front().first;
+                file_path = index_requests_.front().second;
+
+                std::cout << "Indexing: " << file_path << std::endl;
+
+                index_requests_.pop();
+
+                index_op_map_[job_id] = {.status = INDEX_OP_ONGOING};
+
                 index_fsm_state_ = INDEX_FSM_BUSY;
             }
             break;
 
             case INDEX_FSM_BUSY:
             {
-                const uint64_t job_id = index_requests_.front().first;
-                const std::string file_path = index_requests_.front().second;
-
-                index_requests_.pop();
-                index_op_map_[job_id] = {.status = INDEX_OP_ONGOING};
-
                 index_rq_status_t index_result = INDEX_OP_OK;
 
                 try
@@ -123,6 +145,7 @@ void Sonora::_indexRoutine(void)
                     index_result = INDEX_OP_ERROR;
                 }
 
+                std::lock_guard<std::mutex> lock(mtx_index_);
                 index_op_map_[job_id] = {.status = index_result, .expire_time = std::chrono::steady_clock::now() + index_expire_mins_};
             
                 index_fsm_state_ = INDEX_FSM_IDLE;
@@ -131,9 +154,14 @@ void Sonora::_indexRoutine(void)
         
             default:
             {
-                throw std::runtime_error("Unknown status reached: " + index_fsm_state_);
+                throw std::runtime_error("Unknown status reached: " + std::to_string(static_cast<int>(index_fsm_state_)));
             }
             break;
         }
     }
+}
+
+bool Sonora::hasPendingIndexOps(void)
+{
+    return ( (index_fsm_state_ != INDEX_FSM_IDLE) || (!index_requests_.empty()) );
 }
