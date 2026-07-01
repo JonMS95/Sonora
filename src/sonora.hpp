@@ -15,10 +15,7 @@
 // Should we make this a singleton??
 class Sonora
 {
-private:
-    using op_time_t = std::chrono::steady_clock::time_point;
-
-    // Indexing-side definitions
+public:
     typedef enum
     {
         INDEX_OP_QUEUED  = 0,
@@ -28,6 +25,19 @@ private:
         INDEX_OP_UNKNOWN    ,
     } index_rq_status_t;
 
+    typedef enum
+    {
+        MATCH_OP_QUEUED  = 0,
+        MATCH_OP_ONGOING    ,
+        MATCH_OP_OK         ,
+        MATCH_OP_ERROR      ,
+        MATCH_OP_UNKNOWN    ,
+    } match_rq_status_t;
+
+private:
+    using op_time_t = std::chrono::steady_clock::time_point;
+
+    // Indexing-side definitions
     typedef struct
     {
         index_rq_status_t status;
@@ -49,7 +59,6 @@ private:
     std::queue<std::pair<uint64_t, std::string>> index_requests_;
     std::unordered_map<uint64_t, index_op_info_t> index_op_map_;
     
-    index_fsm_t index_fsm_state_;
     bool keep_index_running_;
     const std::chrono::minutes index_expire_mins_;
     std::thread index_thread_;
@@ -57,15 +66,6 @@ private:
     std::mutex mtx_index_;
 
     // Matching-side definitions
-    typedef enum
-    {
-        MATCH_OP_QUEUED  = 0,
-        MATCH_OP_ONGOING    ,
-        MATCH_OP_OK         ,
-        MATCH_OP_ERROR      ,
-        MATCH_OP_UNKNOWN    ,
-    } match_rq_status_t;
-
     typedef struct
     {
         match_rq_status_t status;
@@ -76,7 +76,8 @@ private:
     typedef enum
     {
         MATCH_FSM_IDLE = 0  ,
-        MATCH_FSM_BUSY      ,
+        MATCH_FSM_MATCH     ,
+        MATCH_FSM_SAVE      ,
     } match_fsm_t;
 
     // Matching-side variables
@@ -84,10 +85,9 @@ private:
     const uint64_t max_match_rqs_;
     
     uint64_t match_job_id_;
-    std::queue<std::string> match_requests_;
+    std::queue<std::pair<uint64_t, std::string>> match_requests_;
     std::unordered_map<uint64_t, match_op_info_t> match_op_map_;
     
-    match_fsm_t match_fsm_state_;
     bool keep_match_running_;
     const std::chrono::minutes match_expire_mins_;
     std::vector<std::thread> match_thread_pool_;
@@ -96,6 +96,9 @@ private:
 
     // Indexing-side functions
     void _indexRoutine(void);
+
+    // Matching-side functions
+    void _matchRoutine(void);
 
 public:
     explicit Sonora(const uint32_t downsmp_freq                                                 ,
@@ -118,9 +121,12 @@ public:
 
     std::optional<uint64_t> index(const std::string& file_path);
     bool hasPendingIndexOps(void);
+    index_rq_status_t getIndexStatus(const uint64_t job_id);
 
     std::optional<uint64_t> match(const std::string& file_path);
     bool hasPendingMatchOps(void);
+    index_rq_status_t getMatchStatus(const uint64_t job_id);
+    std::string getMatchResult(const uint64_t job_id);
 };
 
 #endif
