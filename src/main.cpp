@@ -4,6 +4,8 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <optional>
+#include <unordered_map>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"
 #include "sonora.hpp"
@@ -90,30 +92,79 @@ int main(int argc, char** argv)
 
     sonora.run();
 
-    if(index_match == 'i')
-    {
+    // if(index_match == 'i')
+    // {
         // sonora.index(input);
 
         std::cout << "Indexing songs..." << std::endl;
 
         // Use input as dir temporarily
 
-        sonora.index(input + "1148__walkerbelm__shirty.wav");
-        sonora.index(input + "118171__mikobuntu__9.wav");
-        sonora.index(input + "121039__thirsk__140-fx-bass-2.wav");
-        sonora.index(input + "167068__k0s__spiffy-spank.wav");
-        sonora.index(input + "243853__zuluonedrop__dm_70_drums_rub_a_dub.wav");
+        sonora.index(input + "/in/" + "1148__walkerbelm__shirty.wav");
+        sonora.index(input + "/in/" + "118171__mikobuntu__9.wav");
+        sonora.index(input + "/in/" + "121039__thirsk__140-fx-bass-2.wav");
+        sonora.index(input + "/in/" + "167068__k0s__spiffy-spank.wav");
+        sonora.index(input + "/in/" + "243853__zuluonedrop__dm_70_drums_rub_a_dub.wav");
+        sonora.index(input + "/in/" + "258210__mikobuntu__hoover-glitch2.wav");
+        sonora.index(input + "/in/" + "258211__mikobuntu__hoover-glitch.wav");
+        sonora.index(input + "/in/" + "365646__caboose3146__horror-loop.wav");
+        sonora.index(input + "/in/" + "485869__phonosupf__accordion-melody-23.wav");
+        sonora.index(input + "/in/" + "488302__phonosupf__piano-chords-4.wav");
+        sonora.index(input + "/in/" + "554517__truscience__ts_galaxyperc.wav");
+        sonora.index(input + "/in/" + "577068__qubodup__simple-seamless-music-loop.wav");
+        sonora.index(input + "/in/" + "850199__voxbox_502__phat-acidic-synth-melody-140bpm.wav");
 
         while(sonora.hasPendingIndexOps())
             std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+
+        std::unordered_map<std::optional<uint64_t>, std::string> job_ids_to_songs;
+
+        job_ids_to_songs[sonora.match(input + "/parts/" + "1148__walkerbelm__shirty_part_015.wav")] = "1148__walkerbelm__shirty_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "118171__mikobuntu__9_part_015.wav")] = "118171__mikobuntu__9_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "121039__thirsk__140-fx-bass-2_part_015.wav")] = "121039__thirsk__140-fx-bass-2_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "167068__k0s__spiffy-spank_part_015.wav")] = "167068__k0s__spiffy-spank_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "243853__zuluonedrop__dm_70_drums_rub_a_dub_part_015.wav")] = "243853__zuluonedrop__dm_70_drums_rub_a_dub_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "258210__mikobuntu__hoover-glitch2_part_015.wav")] = "258210__mikobuntu__hoover-glitch2_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "258211__mikobuntu__hoover-glitch_part_015.wav")] = "258211__mikobuntu__hoover-glitch_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "365646__caboose3146__horror-loop_part_015.wav")] = "365646__caboose3146__horror-loop_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "485869__phonosupf__accordion-melody-23_part_015.wav")] = "485869__phonosupf__accordion-melody-23_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "488302__phonosupf__piano-chords-4_part_015.wav")] = "488302__phonosupf__piano-chords-4_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "554517__truscience__ts_galaxyperc_part_015.wav")] = "554517__truscience__ts_galaxyperc_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "577068__qubodup__simple-seamless-music-loop_part_015.wav")] = "577068__qubodup__simple-seamless-music-loop_part_015.wav";
+        job_ids_to_songs[sonora.match(input + "/parts/" + "850199__voxbox_502__phat-acidic-synth-melody-140bpm_part_015.wav")] = "850199__voxbox_502__phat-acidic-synth-melody-140bpm_part_015.wav";
+
+        while(sonora.hasPendingMatchOps())
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        
+        std::this_thread::sleep_for(std::chrono::seconds(20));
+
+        std::string str = "";
+
+        for(auto it = job_ids_to_songs.begin(); it != job_ids_to_songs.end(); it++)
+        {
+            std::string job_id_str = (!it->first.has_value()) ? "None" : std::to_string(it->first.value());
+
+            str = "Job ID: " + job_id_str;
+
+            if(job_id_str == "None")
+            {
+                std::cout << str << std::endl;
+                continue;
+            }
+
+            str = str + ", sample name: " + it->second + ", matched song name: " + sonora.getMatchResult(it->first.value());
+
+            std::cout << str << std::endl;
+        }
+
+    // }
     // else if(index_match == 'm')
     //     sonora.index(input);
-    else
-    {
-        std::cerr << "Provide either \'i\' or \'m\' as first input parameter, no other" << std::endl;
-        return -1;
-    }
+    // else
+    // {
+        // std::cerr << "Provide either \'i\' or \'m\' as first input parameter, no other" << std::endl;
+        // return -1;
+    // }
 
     sonora.end();
 
