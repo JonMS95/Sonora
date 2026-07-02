@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <queue>
 #include <string>
+#include <optional>
 #include <iostream>
 #include <stdexcept>
 #include "audio_indexer.hpp"
@@ -180,7 +181,7 @@ void Sonora::_indexRoutine(void)
             case INDEX_FSM_SAVE:
             {
                 std::lock_guard<std::mutex> lock(mtx_index_);
-                index_op_map_[job_id] = {.status = index_result, .expire_time = std::chrono::steady_clock::now() + index_expire_mins_};
+                index_op_map_.at(job_id) = {.status = index_result, .expire_time = std::chrono::steady_clock::now() + index_expire_mins_};
             
                 index_fsm_state = INDEX_FSM_IDLE;
             }
@@ -249,16 +250,13 @@ std::optional<uint64_t> Sonora::match(const std::string& file_path)
     return job_id;
 }
 
-static uint64_t match_count = 0;
-
 void Sonora::_matchRoutine(void)
 {
-    std::cout << "Thread started: " << match_count++ << std::endl;
-
     uint64_t job_id;
     std::string file_path;
     match_rq_status_t match_result;
     match_fsm_t match_fsm_state = MATCH_FSM_IDLE;
+    std::string match_db_name = "";
 
     while(keep_match_running_)
     {
@@ -298,7 +296,7 @@ void Sonora::_matchRoutine(void)
 
                 try
                 {
-                    audio_matcher_.match(file_path);
+                    match_db_name = audio_matcher_.match(file_path);
                 }
                 catch(const std::exception& e)
                 {
@@ -313,8 +311,9 @@ void Sonora::_matchRoutine(void)
             case MATCH_FSM_SAVE:
             {
                 std::lock_guard<std::mutex> lock(mtx_match_);
-                match_op_map_[job_id] = {.status = match_result, .expire_time = std::chrono::steady_clock::now() + match_expire_mins_, .match_name = ""};
-            
+                match_op_map_.at(job_id) = {.status = match_result, .expire_time = std::chrono::steady_clock::now() + match_expire_mins_, .match_name = match_db_name};
+                match_db_name = "";
+
                 match_fsm_state = MATCH_FSM_IDLE;
             }
             break;
@@ -331,4 +330,9 @@ void Sonora::_matchRoutine(void)
 bool Sonora::hasPendingMatchOps(void)
 {
     return !match_requests_.empty();
+}
+
+std::string Sonora::getMatchResult(const uint64_t job_id)
+{
+    return match_op_map_.at(job_id).match_name;
 }
