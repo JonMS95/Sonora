@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"
+#include "scheduler.hpp"
 #include "sonora.hpp"
 
 #define DEFAULT_SLEEP_SECS 1

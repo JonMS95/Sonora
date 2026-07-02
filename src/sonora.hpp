@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"
+#include "scheduler.hpp"
 
 // Should we make this a singleton??
 class Sonora
@@ -99,6 +100,8 @@ private:
 
     // Matching-side functions
     void _matchRoutine(void);
+
+    Scheduler<map_value_type, AudioMatcher::audio_matcher_.index, [](void) -> void {}> index_scheduler_;
 
 public:
     explicit Sonora(const uint32_t downsmp_freq                                                 ,
