@@ -43,8 +43,7 @@ Sonora::Sonora( const uint32_t downsmp_freq                 ,
     max_match_rqs_(max_match_rqs)               ,
     match_job_id_(0)                            ,
     keep_match_running_(false)                  ,
-    match_expire_mins_(match_expire_mins)       ,
-    match_thread_pool_(max_match_threads)
+    match_expire_mins_(match_expire_mins)
 {
     std::cout << max_match_threads << std::endl;
     match_thread_pool_.resize(max_match_threads);
