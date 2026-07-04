@@ -1,3 +1,6 @@
+#ifndef SCHEDULER_HPP
+#define SCHEDULER_HPP
+
 #include <chrono>
 #include <queue>
 #include <vector>
@@ -7,20 +10,12 @@
 #include <thread>
 #include <cstddef>
 #include <optional>
+#include <functional>
+#include "rq_status_enum.hpp"
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
+template <typename map_value_t>
 class Scheduler
 {
-public:
-    typedef enum
-    {
-        OP_QUEUED  = 0,
-        OP_ONGOING    ,
-        OP_OK         ,
-        OP_ERROR      ,
-        OP_UNKNOWN    ,
-    } rq_status_t;
-
 private:
     using op_time_t = std::chrono::steady_clock::time_point;
 
@@ -34,7 +29,7 @@ private:
     const uint64_t max_rqs_;
     uint64_t job_id_;
     std::queue<std::pair<uint64_t, std::string>> requests_;
-    std::unordered_map<uint64_t, map_value_type> op_map_;
+    std::unordered_map<uint64_t, map_value_t> op_map_;
 
     bool keep_running_;
     const std::chrono::minutes expire_mins_;
@@ -45,54 +40,75 @@ private:
     void _threadRoutine(void);
 
 public:
-    explicit Scheduler(const uint64_t max_rqs, const std::chrono::minutes expire_mins, const uint64_t max_threads);
+    using work_fn_sig_t = std::optional<std::string>(const std::string&);
+    using save_fn_sig_t = void(map_value_t&, const std::optional<std::string>&);
+
+private:
+    std::function<work_fn_sig_t> work_fn_;
+    std::function<save_fn_sig_t> save_fn_;
+
+public:
+    explicit Scheduler( std::function<work_fn_sig_t> work_fn        ,
+                        std::function<save_fn_sig_t> save_fn        ,
+                        const uint64_t max_rqs                  = 10,
+                        const std::chrono::minutes expire_mins  = 10,
+                        const uint64_t max_threads              = 10);
     virtual ~Scheduler(void);
 
     void run(void);
     void end(void);
     std::optional<uint64_t> enqueueJob(const std::string& file_path);
-    rq_status_t getJobStatus(const uint64_t job_id);
+    request_status_t getJobStatus(const uint64_t job_id);
+    bool hasPendingOps(void);
+    map_value_t getJobResult(const uint64_t job_id);
 };
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-Scheduler<map_value_type, work_fn, match_ret_fn>::Scheduler(const uint64_t max_rqs                  = 10,
-                                                            const std::chrono::minutes expire_mins  = 10,
-                                                            const uint64_t max_threads              = 10):
-    max_rqs_(max_rqs),
-    job_id_(0),
-    keep_running_(false),
-    expire_mins_(expire_mins),
+template <typename map_value_t>
+Scheduler<map_value_t>::Scheduler(  std::function<work_fn_sig_t> work_fn    ,
+                                    std::function<save_fn_sig_t> save_fn    ,
+                                    const uint64_t max_rqs                  ,
+                                    const std::chrono::minutes expire_mins  ,
+                                    const uint64_t max_threads              ):
+    max_rqs_(max_rqs)           ,
+    job_id_(0)                  ,
+    keep_running_(false)        ,
+    expire_mins_(expire_mins)   ,
+    work_fn_(work_fn)           ,
+    save_fn_(save_fn)
 {
     std::cout << max_threads << std::endl;
     thread_pool_.resize(max_threads);
 }
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-Scheduler<map_value_type, work_fn, match_ret_fn>::~Scheduler(void)
+template <typename map_value_t>
+Scheduler<map_value_t>::~Scheduler(void)
 {
     if(keep_running_)
         end();
 }
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-void Scheduler<map_value_type, work_fn, match_ret_fn>::run(void)
+template <typename map_value_t>
+void Scheduler<map_value_t>::run(void)
 {
     keep_running_ = true;
     for(std::thread& t : thread_pool_)
-        t = std::thread(&Scheduler<map_value_type, work_fn, match_ret_fn>::_threadRoutine, this);
+        t = std::thread(&Scheduler<map_value_t>::_threadRoutine, this);
 }
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-void Scheduler<map_value_type, work_fn, match_ret_fn>::end(void)
+template <typename map_value_t>
+void Scheduler<map_value_t>::end(void)
 {
+    if(!keep_running_)
+        return;
+
     keep_running_ = false;
     cv_.notify_all();
     for(std::thread& th : thread_pool_)
         th.join();
 }
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-std::optional<uint64_t> Scheduler<map_value_type, work_fn, match_ret_fn>::enqueueJob(const std::string& file_path)
+template <typename map_value_t>
+std::optional<uint64_t> Scheduler<map_value_t>::enqueueJob(const std::string& file_path)
 {
     // If queue is already full, then exit immediately.
     if(static_cast<uint64_t>(requests_.size()) >= max_rqs_)
@@ -101,13 +117,13 @@ std::optional<uint64_t> Scheduler<map_value_type, work_fn, match_ret_fn>::enqueu
     uint64_t job_id = job_id_;
 
     // Check if job_id exists or not. If so, store its status.
-    rq_status_t job_id_status = op_map_.count(job_id) ? op_map_.at(job_id).status : OP_UNKNOWN;
+    request_status_t job_id_status = op_map_.count(job_id) ? op_map_.at(job_id).status : request_status_t::OP_UNKNOWN;
 
     // If no op id was found in the map, then skip this step.
-    if(job_id_status != OP_UNKNOWN)
+    if(job_id_status != request_status_t::OP_UNKNOWN)
     {
         // If it's waiting to be processed (enqueued) or ongoing, then return nullopt.
-        if(job_id_status == OP_QUEUED || job_id_status == OP_ONGOING)
+        if(job_id_status == request_status_t::OP_QUEUED || job_id_status == request_status_t::OP_ONGOING)
             return std::nullopt;
         
         // Retrieve current time and expire time from the map.
@@ -115,7 +131,7 @@ std::optional<uint64_t> Scheduler<map_value_type, work_fn, match_ret_fn>::enqueu
         op_time_t op_expire = op_map_.at(job_id).expire_time;
 
         // If job is finished but expire time has not been reached yet, then return nullopt.
-        if((job_id_status == OP_OK || job_id_status == OP_ERROR) && op_expire > now)
+        if((job_id_status == request_status_t::OP_OK || job_id_status == request_status_t::OP_ERROR) && op_expire > now)
             return std::nullopt;
     }
 
@@ -127,7 +143,7 @@ std::optional<uint64_t> Scheduler<map_value_type, work_fn, match_ret_fn>::enqueu
 
         std::cout << "Adding song: " << file_path << std::endl;
         requests_.push({job_id, file_path});
-        op_map_[job_id].status = OP_QUEUED;
+        op_map_[job_id].status = request_status_t::OP_QUEUED;
     }
 
     // Notify a thread so that it knows there's already work to do.
@@ -136,22 +152,22 @@ std::optional<uint64_t> Scheduler<map_value_type, work_fn, match_ret_fn>::enqueu
     return job_id;
 }
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-Scheduler<map_value_type, work_fn, match_ret_fn>::rq_status_t Scheduler<map_value_type, work_fn, match_ret_fn>::getJobStatus(const uint64_t job_id)
+template <typename map_value_t>
+request_status_t Scheduler<map_value_t>::getJobStatus(const uint64_t job_id)
 {
     std::lock_guard<std::mutex> lock(mtx_);
     return op_map_.at(job_id).status;
 }
 
-template <typename map_value_type, typename work_fn, typename match_ret_fn>
-void Scheduler<map_value_type, work_fn, match_ret_fn>::_threadRoutine(void)
+template <typename map_value_t>
+void Scheduler<map_value_t>::_threadRoutine(void)
 {
     uint64_t job_id;
     std::string file_path;
-    rq_status_t result;
-    fsm_t fsm_state = FSM_IDLE;
+    request_status_t result;
+    fsm_state_t fsm_state = FSM_IDLE;
 
-    using work_fn_ret_t = std::invoke_result_t<work_fn>;
+    using work_fn_ret_t = std::optional<std::string>;
 
     work_fn_ret_t ret_work;
 
@@ -181,7 +197,7 @@ void Scheduler<map_value_type, work_fn, match_ret_fn>::_threadRoutine(void)
 
                 requests_.pop();
 
-                op_map_[job_id] = {.status = OP_ONGOING};
+                op_map_[job_id] = {.status = request_status_t::OP_ONGOING};
 
                 fsm_state = FSM_WORK;
             }
@@ -189,17 +205,17 @@ void Scheduler<map_value_type, work_fn, match_ret_fn>::_threadRoutine(void)
 
             case FSM_WORK:
             {
-                result = OP_OK;
+                result = request_status_t::OP_OK;
 
                 try
                 {
                     // Use constructor/template-provided function here.
-                    ret_work = work_fn(file_path);
+                    ret_work = work_fn_(file_path);
                 }
                 catch(const std::exception& e)
                 {
                     std::cerr << e.what() << std::endl;
-                    result = OP_ERROR;
+                    result = request_status_t::OP_ERROR;
                 }
 
                 fsm_state = FSM_SAVE;
@@ -210,11 +226,13 @@ void Scheduler<map_value_type, work_fn, match_ret_fn>::_threadRoutine(void)
             {
                 std::lock_guard<std::mutex> lock(mtx_);
 
-                if(ret_work != std::nullopt)
-                    op_map_.at(job_id) = {.status = result, .expire_time = std::chrono::steady_clock::now() + expire_mins_, .ret = ret_work};
-                else
-                    op_map_.at(job_id) = {.status = result, .expire_time = std::chrono::steady_clock::now() + expire_mins_};
-            
+                auto& op = op_map_.at(job_id);
+
+                op.status = result;
+                op.expire_time = std::chrono::steady_clock::now() + expire_mins_;
+
+                save_fn_(op, ret_work);
+
                 fsm_state = FSM_IDLE;
             }
             break;
@@ -227,3 +245,22 @@ void Scheduler<map_value_type, work_fn, match_ret_fn>::_threadRoutine(void)
         }
     }
 }
+
+template <typename map_value_t>
+bool Scheduler<map_value_t>::hasPendingOps(void)
+{
+    return !requests_.empty();
+}
+
+template <typename map_value_t>
+map_value_t Scheduler<map_value_t>::getJobResult(const uint64_t job_id)
+{
+    map_value_t ret = {};
+    
+    if(op_map_.count(job_id))
+        ret = op_map_.at(job_id);
+
+    return ret;
+}
+
+#endif
