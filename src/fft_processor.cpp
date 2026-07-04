@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <numeric>
 #include <fftw3.h>
+#include <mutex>
 #include "fft_processor.hpp"
 
 #define SAMPLES_IN_FRAME(F_DUR, S_FREQ) (F_DUR * S_FREQ)
@@ -92,6 +93,8 @@ std::vector<std::size_t> FFTProcessor::featExt(const std::vector<float>& frame)
     {
         return sq_mags_[a] < sq_mags_[b];
     };
+
+    std::lock_guard<std::mutex> lock(fft_mtx_);
 
     FFT(frame);
 
