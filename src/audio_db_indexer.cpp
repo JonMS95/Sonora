@@ -183,10 +183,29 @@ uint32_t AudioDBIndexer::_getOrCreateSongId(const std::string& song_name) const
     return static_cast<uint32_t>(sqlite3_last_insert_rowid(db_));
 }
 
+void AudioDBIndexer::_deleteFingerprints(const uint32_t song_id) const
+{
+    const std::string& sql =
+        "DELETE FROM fingerprints WHERE song_id = ?;";
+
+    sqlite3_stmt* raw_stmt = nullptr;
+
+    int rc = sqlite3_prepare_v2(db_, sql.c_str(), -1, &raw_stmt, nullptr);
+    if (rc != SQLITE_OK)
+        throw std::runtime_error("Failed to prepare fingerprint deletion statement");
+
+    std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>
+        stmt(raw_stmt, &sqlite3_finalize);
+
+    sqlite3_bind_int(stmt.get(), 1, song_id);
+
+    rc = sqlite3_step(stmt.get());
+    if (rc != SQLITE_DONE)
+        throw std::runtime_error("Failed to delete fingerprints");
+}
+
 void AudioDBIndexer::insertFingerprints(const std::string& song_name, const std::unordered_map<std::size_t, std::vector<uint32_t>>& frame_hashes) const
 {
-    const uint32_t song_id = _getOrCreateSongId(song_name);
-
     const std::string& sql = "INSERT INTO fingerprints(hash, song_id, frame_idx) VALUES (?, ?, ?);";
 
     sqlite3_stmt* raw_stmt = nullptr;
@@ -196,11 +215,14 @@ void AudioDBIndexer::insertFingerprints(const std::string& song_name, const std:
 
     std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_stmt(raw_stmt, &sqlite3_finalize);
 
-    // Start transaction here.
-    sqlite3_exec(db_, "BEGIN;", nullptr, nullptr, nullptr);
-
     try
     {
+        // Start transaction here.
+        sqlite3_exec(db_, "BEGIN;", nullptr, nullptr, nullptr);
+
+        const uint32_t song_id = _getOrCreateSongId(song_name);
+        _deleteFingerprints(song_id);
+
         for (const auto& [frame_idx, hashes] : frame_hashes)
         {
             for (uint32_t hash : hashes)
