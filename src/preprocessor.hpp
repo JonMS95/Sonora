@@ -4,6 +4,7 @@
 #include <string>
 #include <cstddef>
 #include <sndfile.h>
+#include <mutex>
 #include "fir_filter.hpp"
 
 class Preprocessor
@@ -12,6 +13,7 @@ private:
     FIRFilter fir_filter_;
     const uint32_t downsmp_freq_;
     SF_INFO sf_info_;
+    std::mutex prep_mtx_;
 
     std::vector<float>  _read(const std::string& file_path)                             ;
     std::vector<float>  _mono(const std::vector<float>& signal)                         ;

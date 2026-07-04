@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
+#include <mutex>
 #include <sndfile.h>
 #include <samplerate.h>
 #include "preprocessor.hpp"
@@ -146,6 +147,8 @@ void Preprocessor::_write(const std::vector<float>& signal, const std::string& o
 
 std::vector<float> Preprocessor::preprocessData(const std::string& input_path, const std::string& output_path)
 {
+    std::lock_guard<std::mutex> lock(prep_mtx_);
+    
     sf_info_ = {0};
 
     std::vector<float> raw      = _read(input_path);
