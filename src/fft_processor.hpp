@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <cstddef>
+#include <mutex>
 #include <fftw3.h>
 
 class FFTProcessor
@@ -17,6 +18,7 @@ private:
     const std::vector<std::size_t> indices_;                            // Indices vector to be used as template when extracting features.
     std::unique_ptr<fftwf_complex, decltype(&fftwf_free)> fft_comp_;    // Complex FFT pointer.
     fftwf_plan fft_plan_;                                               // FFT plan.
+    std::mutex fft_mtx_;                                                // Mutex to ensure only one thread is modifying non-const class members.
 
     bool _isSqMagIndexValid(const std::size_t idx) const;
     bool _isLocalMax(const std::size_t idx) const;

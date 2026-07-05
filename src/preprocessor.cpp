@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
+#include <mutex>
 #include <sndfile.h>
 #include <samplerate.h>
 #include "preprocessor.hpp"
@@ -43,8 +44,6 @@ Preprocessor::Preprocessor( const uint32_t smp_rate     ,
     fir_filter_(FIRFilter(calcFIRFiterCutoff(smp_rate, downsmp_freq), fir_coefs)),
     downsmp_freq_(downsmp_freq)
 {}
-
-// #include <iostream>
 
 std::vector<float> Preprocessor::_read(const std::string& file_path)
 {
@@ -146,6 +145,8 @@ void Preprocessor::_write(const std::vector<float>& signal, const std::string& o
 
 std::vector<float> Preprocessor::preprocessData(const std::string& input_path, const std::string& output_path)
 {
+    std::lock_guard<std::mutex> lock(prep_mtx_);
+    
     sf_info_ = {0};
 
     std::vector<float> raw      = _read(input_path);

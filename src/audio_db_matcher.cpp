@@ -54,7 +54,7 @@ std::string AudioDBMatcher::_getSongName(const uint32_t song_id) const
     sqlite3_stmt* raw_stmt = nullptr;
 
     if(sqlite3_prepare_v2(db_, sql.c_str(), -1, &raw_stmt, nullptr) != SQLITE_OK)
-        throw std::runtime_error("Failed to prepare insert statement");
+        throw std::runtime_error("Failed to prepare select statement");
     
     std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)> p_stmt(raw_stmt, &sqlite3_finalize);
 
@@ -63,15 +63,13 @@ std::string AudioDBMatcher::_getSongName(const uint32_t song_id) const
     std::string result;
 
     // Expect at most one row
-    if (sqlite3_step(p_stmt.get()) == SQLITE_ROW)
+    if(sqlite3_step(p_stmt.get()) == SQLITE_ROW)
     {
         const unsigned char* text =
             sqlite3_column_text(p_stmt.get(), 0);
 
-        if (text)
-        {
+        if(text)
             result = reinterpret_cast<const char*>(text);
-        }
     }
 
     return result;

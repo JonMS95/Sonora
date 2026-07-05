@@ -26,6 +26,7 @@ private:
     void _createSongsTable(void) const;
     void _createFingerprintsTable(void) const;
     uint32_t _getOrCreateSongId(const std::string& song_name) const;
+    void _deleteFingerprints(const uint32_t song_id) const;
 
 public:
     explicit AudioDBIndexer(const std::string& db_path  ,
