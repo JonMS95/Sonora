@@ -29,17 +29,6 @@ private:
 
     // Indexing-side variables
     AudioIndexer audio_indexer_;
-    const uint64_t max_index_rqs_;
-    
-    uint64_t index_job_id_;
-    std::queue<std::pair<uint64_t, std::string>> index_requests_;
-    std::unordered_map<uint64_t, index_op_info_t> index_op_map_;
-    
-    bool keep_index_running_;
-    const std::chrono::minutes index_expire_mins_;
-    std::thread index_thread_;
-    std::condition_variable cv_index_;
-    std::mutex mtx_index_;
 
     // Matching-side definitions
     typedef struct
@@ -51,17 +40,6 @@ private:
 
     // Matching-side variables
     AudioMatcher audio_matcher_;
-    const uint64_t max_match_rqs_;
-    
-    uint64_t match_job_id_;
-    std::queue<std::pair<uint64_t, std::string>> match_requests_;
-    std::unordered_map<uint64_t, match_op_info_t> match_op_map_;
-    
-    bool keep_match_running_;
-    const std::chrono::minutes match_expire_mins_;
-    std::vector<std::thread> match_thread_pool_;
-    std::condition_variable cv_match_;
-    std::mutex mtx_match_;
 
     // Indexing-side functions
     void _indexRoutine(void);
