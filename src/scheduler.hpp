@@ -80,7 +80,6 @@ Scheduler<map_value_t>::Scheduler(  std::function<work_fn_sig_t> work_fn    ,
     work_fn_(work_fn)           ,
     save_fn_(save_fn)           
 {
-    std::cout << max_threads << std::endl;
     thread_pool_.resize(max_threads);
 }
 
@@ -145,7 +144,6 @@ std::optional<uint64_t> Scheduler<map_value_t>::enqueueJob(const std::string& fi
     {
         std::lock_guard<std::mutex> lock(mtx_);
 
-        std::cout << "Adding song: " << file_path << std::endl;
         requests_.push({job_id, file_path});
         op_map_[job_id].status = request_status_t::OP_QUEUED;
     }
@@ -184,20 +182,13 @@ void Scheduler<map_value_t>::_threadRoutine(void)
                 // Wait for the condition variable to be raise (which will lead the current thread to be awakened).
                 std::unique_lock<std::mutex> lock(mtx_);
 
-                std::cout << "Waiting for cv to be awaken..." << std::endl;
-
                 cv_.wait(lock, [this] { return !requests_.empty() || !keep_running_; });
 
                 if(!keep_running_)
-                {
-                    std::cout << "No longer operating!!" << std::endl;
                     break;
-                }
 
                 job_id = requests_.front().first;
                 file_path = requests_.front().second;
-
-                std::cout << "Working: " << file_path << std::endl;
 
                 requests_.pop();
 
