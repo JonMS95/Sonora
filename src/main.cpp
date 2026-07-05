@@ -1,13 +1,9 @@
-#include <vector>
 #include <string>
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <optional>
-#include <unordered_map>
-#include "audio_indexer.hpp"
-#include "audio_matcher.hpp"
 #include "sonora.hpp"
 
 int main(int argc, char** argv)
@@ -83,42 +79,53 @@ int main(int argc, char** argv)
 
     if(index_match == 'i')
     {
-        sonora.index(input);
+        std::optional<uint64_t> job_id = sonora.index(input);
 
-        std::cout << "Indexing songs: " << input << std::endl;
+        if(job_id == std::nullopt)
+        {
+            std::cout << "No valid job id was returned, stopping indexing procedure now..." << std::endl;
+            return -2;
+        }
 
-        sonora.index(input);
+        std::cout << "Indexing song: " << input << std::endl;
         
         while(sonora.hasPendingIndexOps() || sonora.hasOngoingIndexOps())
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        
+        const int index_status = static_cast<int>(sonora.getIndexStatus(job_id.value()));
+
+        if(index_status != 2)
+        {
+            std::cout << "Index op status did not go as expected, stopping procedure now..." << std::endl;
+            return -3;
+        }
     }
     else if(index_match == 'm')
     {
-        std::unordered_map<std::optional<uint64_t>, std::string> job_ids_to_songs;
+        std::optional<uint64_t> job_id = sonora.match(input);
 
-        job_ids_to_songs[sonora.match(input)] = input;
+        if(job_id == std::nullopt)
+        {
+            std::cout << "No valid job id was returned, stopping matching procedure now..." << std::endl;
+            return -2;
+        }
+
+        std::cout << "Matching song: " << input << std::endl;
 
         while(sonora.hasPendingMatchOps() || sonora.hasOngoingMatchOps())
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         std::string str = "";
 
-        for(auto it = job_ids_to_songs.begin(); it != job_ids_to_songs.end(); it++)
+        const int match_status = static_cast<int>(sonora.getMatchStatus(job_id.value()));
+
+        if(match_status != 2)
         {
-            std::string job_id_str = (!it->first.has_value()) ? "None" : std::to_string(it->first.value());
-
-            str = "Job ID: " + job_id_str + ", job status: " + std::to_string(static_cast<int>(sonora.getMatchStatus(it->first.value())));
-
-            if(job_id_str == "None")
-            {
-                std::cout << str << std::endl;
-                continue;
-            }
-
-            str = str + ", sample name: " + it->second + ", matched song name: " + sonora.getMatchResult(it->first.value());
-
-            std::cout << str << std::endl;
+            std::cout << "Match op status did not go as expected, stopping procedure now..." << std::endl;
+            return -3;
         }
+
+        std::cout << "Match result: " << sonora.getMatchResult(job_id.value()) << std::endl;
     }
     else
     {
