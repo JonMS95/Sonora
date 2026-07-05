@@ -12,6 +12,7 @@
 #include <optional>
 #include <functional>
 #include "rq_status_enum.hpp"
+#include "running_job_guard.hpp"
 
 template <typename map_value_t>
 class Scheduler
@@ -23,7 +24,6 @@ private:
     {
         FSM_IDLE = 0,
         FSM_WORK    ,
-        FSM_SAVE    ,
     } fsm_state_t;
 
     const uint64_t max_rqs_;
@@ -36,6 +36,8 @@ private:
     std::vector<std::thread> thread_pool_;
     std::condition_variable cv_;
     std::mutex mtx_;
+
+    std::atomic<uint64_t> ongoing_jobs_;
 
     void _threadRoutine(void);
 
@@ -60,6 +62,7 @@ public:
     std::optional<uint64_t> enqueueJob(const std::string& file_path);
     request_status_t getJobStatus(const uint64_t job_id);
     bool hasPendingOps(void) const;
+    bool hasOngoingOps(void) const;
     map_value_t getJobResult(const uint64_t job_id) const;
 };
 
@@ -73,8 +76,9 @@ Scheduler<map_value_t>::Scheduler(  std::function<work_fn_sig_t> work_fn    ,
     job_id_(0)                  ,
     keep_running_(false)        ,
     expire_mins_(expire_mins)   ,
+    ongoing_jobs_(0)            ,
     work_fn_(work_fn)           ,
-    save_fn_(save_fn)
+    save_fn_(save_fn)           
 {
     std::cout << max_threads << std::endl;
     thread_pool_.resize(max_threads);
@@ -205,12 +209,13 @@ void Scheduler<map_value_t>::_threadRoutine(void)
 
             case FSM_WORK:
             {
-                result = request_status_t::OP_OK;
+                RunningJobGuard job_guard(ongoing_jobs_);
 
                 try
                 {
                     // Use constructor/template-provided function here.
                     ret_work = work_fn_(file_path);
+                    result = request_status_t::OP_OK;
                 }
                 catch(const std::exception& e)
                 {
@@ -218,12 +223,6 @@ void Scheduler<map_value_t>::_threadRoutine(void)
                     result = request_status_t::OP_ERROR;
                 }
 
-                fsm_state = FSM_SAVE;
-            }
-            break;
-
-            case FSM_SAVE:
-            {
                 std::lock_guard<std::mutex> lock(mtx_);
 
                 auto& op = op_map_.at(job_id);
@@ -247,9 +246,15 @@ void Scheduler<map_value_t>::_threadRoutine(void)
 }
 
 template <typename map_value_t>
-bool Scheduler<map_value_t>::hasPendingOps(void) const 
+bool Scheduler<map_value_t>::hasPendingOps(void) const
 {
     return !requests_.empty();
+}
+
+template <typename map_value_t>
+bool Scheduler<map_value_t>::hasOngoingOps(void) const
+{
+    return (ongoing_jobs_ > 0);
 }
 
 template <typename map_value_t>
