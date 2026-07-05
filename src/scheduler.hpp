@@ -59,8 +59,8 @@ public:
     void end(void);
     std::optional<uint64_t> enqueueJob(const std::string& file_path);
     request_status_t getJobStatus(const uint64_t job_id);
-    bool hasPendingOps(void);
-    map_value_t getJobResult(const uint64_t job_id);
+    bool hasPendingOps(void) const;
+    map_value_t getJobResult(const uint64_t job_id) const;
 };
 
 template <typename map_value_t>
@@ -247,13 +247,13 @@ void Scheduler<map_value_t>::_threadRoutine(void)
 }
 
 template <typename map_value_t>
-bool Scheduler<map_value_t>::hasPendingOps(void)
+bool Scheduler<map_value_t>::hasPendingOps(void) const 
 {
     return !requests_.empty();
 }
 
 template <typename map_value_t>
-map_value_t Scheduler<map_value_t>::getJobResult(const uint64_t job_id)
+map_value_t Scheduler<map_value_t>::getJobResult(const uint64_t job_id) const
 {
     map_value_t ret = {};
     
