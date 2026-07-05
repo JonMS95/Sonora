@@ -86,9 +86,14 @@ std::optional<uint64_t> Sonora::index(const std::string& file_path)
     return index_scheduler_.enqueueJob(file_path);
 }
 
-bool Sonora::hasPendingIndexOps(void)
+bool Sonora::hasPendingIndexOps(void) const
 {
     return index_scheduler_.hasPendingOps();
+}
+
+bool Sonora::hasOngoingIndexOps(void) const
+{
+    return index_scheduler_.hasOngoingOps();
 }
 
 request_status_t Sonora::getIndexStatus(const uint64_t job_id)
@@ -101,9 +106,14 @@ std::optional<uint64_t> Sonora::match(const std::string& file_path)
     return match_scheduler_.enqueueJob(file_path);
 }
 
-bool Sonora::hasPendingMatchOps(void)
+bool Sonora::hasPendingMatchOps(void) const
 {
     return match_scheduler_.hasPendingOps();
+}
+
+bool Sonora::hasOngoingMatchOps(void) const
+{
+    return match_scheduler_.hasOngoingOps();
 }
 
 request_status_t Sonora::getMatchStatus(const uint64_t job_id)
@@ -111,7 +121,7 @@ request_status_t Sonora::getMatchStatus(const uint64_t job_id)
     return match_scheduler_.getJobStatus(job_id);
 }
 
-std::string Sonora::getMatchResult(const uint64_t job_id)
+std::string Sonora::getMatchResult(const uint64_t job_id) const
 {
     return match_scheduler_.getJobResult(job_id).ret;
 }
