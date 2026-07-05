@@ -2,7 +2,6 @@
 #include <queue>
 #include <string>
 #include <optional>
-#include <iostream>
 #include <stdexcept>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"

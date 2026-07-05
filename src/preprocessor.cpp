@@ -45,8 +45,6 @@ Preprocessor::Preprocessor( const uint32_t smp_rate     ,
     downsmp_freq_(downsmp_freq)
 {}
 
-// #include <iostream>
-
 std::vector<float> Preprocessor::_read(const std::string& file_path)
 {
     std::unique_ptr<SNDFILE, decltype(&sf_close)> p_file(sf_open(file_path.c_str(), SFM_READ, &sf_info_), &sf_close);

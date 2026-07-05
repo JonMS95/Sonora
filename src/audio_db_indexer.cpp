@@ -5,7 +5,6 @@
 #include "audio_db_base.hpp"
 #include "audio_db_indexer.hpp"
 
-#include <iostream>
 AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
                                 const uint32_t downsmp_freq ,
                                 const std::size_t fir_coefs ,
