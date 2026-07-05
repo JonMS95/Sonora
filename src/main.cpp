@@ -5,6 +5,7 @@
 #include <thread>
 #include <optional>
 #include "sonora.hpp"
+#include "rq_status_enum.hpp"
 
 int main(int argc, char** argv)
 {
@@ -91,10 +92,8 @@ int main(int argc, char** argv)
         
         while(sonora.hasPendingIndexOps() || sonora.hasOngoingIndexOps())
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        
-        const int index_status = static_cast<int>(sonora.getIndexStatus(job_id.value()));
 
-        if(index_status != 2)
+        if(sonora.getIndexStatus(job_id.value()) != request_status_t::OP_OK)
         {
             std::cout << "Index op status did not go as expected, stopping procedure now..." << std::endl;
             return -3;
@@ -115,11 +114,7 @@ int main(int argc, char** argv)
         while(sonora.hasPendingMatchOps() || sonora.hasOngoingMatchOps())
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        std::string str = "";
-
-        const int match_status = static_cast<int>(sonora.getMatchStatus(job_id.value()));
-
-        if(match_status != 2)
+        if(sonora.getMatchStatus(job_id.value()) != request_status_t::OP_OK)
         {
             std::cout << "Match op status did not go as expected, stopping procedure now..." << std::endl;
             return -3;
