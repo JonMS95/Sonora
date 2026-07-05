@@ -10,35 +10,6 @@
 #include "audio_matcher.hpp"
 #include "sonora.hpp"
 
-#include <sqlite3.h>
-int indexedRowCount(sqlite3* db)
-{
-    const char* sql = "SELECT COUNT(*) FROM songs;";
-    sqlite3_stmt* stmt = nullptr;
-
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-    if (rc != SQLITE_OK)
-    {
-        std::cerr << "Failed to prepare statement: "
-                  << sqlite3_errmsg(db) << std::endl;
-        return false;
-    }
-
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_ROW)
-    {
-        std::cerr << "Failed to execute COUNT query." << std::endl;
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    int rowCount = sqlite3_column_int(stmt, 0);
-
-    sqlite3_finalize(stmt);
-
-    return rowCount;
-}
-
 int main(int argc, char** argv)
 {
     /*
@@ -127,16 +98,6 @@ int main(int argc, char** argv)
 
         std::cout << "Indexing songs..." << std::endl;
 
-        // Use input as dir temporarily
-
-        sqlite3* db;
-
-        if (sqlite3_open("dat/fingerprints.db", &db) != SQLITE_OK)
-        {
-            std::cerr << "Cannot open database." << std::endl;
-            return 1;
-        }
-
         sonora.index(input + "/in/" + "1148__walkerbelm__shirty.wav");
         sonora.index(input + "/in/" + "118171__mikobuntu__9.wav");
         sonora.index(input + "/in/" + "121039__thirsk__140-fx-bass-2.wav");
@@ -151,7 +112,10 @@ int main(int argc, char** argv)
         sonora.index(input + "/in/" + "577068__qubodup__simple-seamless-music-loop.wav");
         sonora.index(input + "/in/" + "850199__voxbox_502__phat-acidic-synth-melody-140bpm.wav");
 
-        while(indexedRowCount(db) != 13)
+        // while(indexedRowCount(db) != 13)
+        //     std::this_thread::sleep_for(std::chrono::seconds(1));
+        
+        while(sonora.hasPendingIndexOps() || sonora.hasOngoingIndexOps())
             std::this_thread::sleep_for(std::chrono::seconds(1));
 
         std::unordered_map<std::optional<uint64_t>, std::string> job_ids_to_songs;
@@ -170,32 +134,8 @@ int main(int argc, char** argv)
         job_ids_to_songs[sonora.match(input + "/parts/" + "577068__qubodup__simple-seamless-music-loop_part_015.wav")] = "577068__qubodup__simple-seamless-music-loop_part_015.wav";
         job_ids_to_songs[sonora.match(input + "/parts/" + "850199__voxbox_502__phat-acidic-synth-melody-140bpm_part_015.wav")] = "850199__voxbox_502__phat-acidic-synth-melody-140bpm_part_015.wav";
 
-        bool keep_waiting = true;
-
-        while(keep_waiting)
-        {
-            int num_of_ok_songs = 0;
-
-            for(auto it = job_ids_to_songs.begin(); it != job_ids_to_songs.end(); it++)
-            {
-                uint64_t job_id = it->first.has_value() ? it->first.value() : 9999;
-            
-                if(static_cast<int>(sonora.getMatchStatus(job_id)) != 2)
-                    break;
-                
-                num_of_ok_songs++;
-            }
-
-            if(num_of_ok_songs == static_cast<int>(job_ids_to_songs.size()))
-               keep_waiting = false;
-            
+        while(sonora.hasPendingMatchOps() || sonora.hasOngoingMatchOps())
             std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-
-        // while(job_ids_to_songs.size() < 13)
-        //     std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        // std::this_thread::sleep_for(std::chrono::seconds(10));
 
         std::string str = "";
 
