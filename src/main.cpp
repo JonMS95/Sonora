@@ -93,6 +93,12 @@ int main(int argc, char** argv)
         while(sonora.hasPendingIndexOps() || sonora.hasOngoingIndexOps())
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
+        while(sonora.getIndexStatus(job_id.value()) == request_status_t::OP_ONGOING)
+        {
+            std::cout << "ONGOING spotted!!!" << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
         if(sonora.getIndexStatus(job_id.value()) != request_status_t::OP_OK)
         {
             std::cout << "Index op status did not go as expected, stopping procedure now..." << std::endl;
