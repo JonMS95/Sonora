@@ -27,13 +27,6 @@ private:
         op_time_t expire_time;
     } index_op_info_t;
 
-    typedef enum
-    {
-        INDEX_FSM_IDLE = 0  ,
-        INDEX_FSM_INDEX     ,
-        INDEX_FSM_SAVE      ,
-    } index_fsm_t;
-
     // Indexing-side variables
     AudioIndexer audio_indexer_;
     const uint64_t max_index_rqs_;
@@ -55,13 +48,6 @@ private:
         op_time_t expire_time;
         std::string ret;
     } match_op_info_t;
-
-    typedef enum
-    {
-        MATCH_FSM_IDLE = 0  ,
-        MATCH_FSM_MATCH     ,
-        MATCH_FSM_SAVE      ,
-    } match_fsm_t;
 
     // Matching-side variables
     AudioMatcher audio_matcher_;
