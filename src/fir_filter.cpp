@@ -56,7 +56,7 @@ std::vector<float> FIRFilter::applyFIR(const std::vector<float>& signal) const
         {
             idx = i + j - M;
 
-            if (idx >= 0 && idx < N)
+            if (idx < N)
                 acc += signal[idx] * kernel_[j];
         }
 

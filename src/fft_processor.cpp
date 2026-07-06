@@ -69,7 +69,7 @@ std::vector<float> FFTProcessor::FFT(const std::vector<float>& frame)
 
 bool FFTProcessor::_isSqMagIndexValid(const std::size_t idx) const
 {
-    return ((idx >= 0) && (idx < num_of_bins_));
+    return (idx < num_of_bins_);
 }
 
 bool FFTProcessor::_isLocalMax(const std::size_t idx) const
@@ -110,7 +110,7 @@ std::vector<std::size_t> FFTProcessor::featExt(const std::vector<float>& frame)
             ret.emplace_back(idx);
 
             for(std::size_t i = (idx - feat_ratio_); i <= (idx + feat_ratio_); i++)
-                if(i >= 0 && i < num_of_bins_)
+                if(i < num_of_bins_)
                     disc_idx.insert(i);
         }
 
