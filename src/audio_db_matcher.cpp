@@ -1,9 +1,5 @@
-#include <vector>
-#include <string>
-#include <cstddef>
 #include <stdexcept>
 #include <memory>
-#include <unordered_map>
 #include <sqlite3.h>
 #include "audio_db_base.hpp"
 #include "audio_db_matcher.hpp"

@@ -1,5 +1,3 @@
-#include <atomic>
-#include <cstddef>
 #include "running_job_guard.hpp"
 
 RunningJobGuard::RunningJobGuard(std::atomic<uint64_t>& c):

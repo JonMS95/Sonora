@@ -2,7 +2,8 @@
 #define AUDIO_INDEXER_HPP
 
 #include <cstddef>
-#include <unordered_map>
+#include <cstdint>
+#include <string>
 #include "audio_base.hpp"
 #include "audio_db_indexer.hpp"
 

@@ -1,9 +1,5 @@
-#include <vector>
 #include <cmath>
-#include <cstddef>
-#include <cstring>
 #include <stdexcept>
-#include <fftw3.h>
 #include "spectral_analyzer.hpp"
 
 SpectralAnalyzer::SpectralAnalyzer( const float frame_duration          ,

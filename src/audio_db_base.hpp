@@ -2,6 +2,8 @@
 #define AUDIO_DB_BASE_HPP
 
 #include <string>
+#include <cstdint>
+#include <cstddef>
 #include <sqlite3.h>
 
 class AudioDBBase

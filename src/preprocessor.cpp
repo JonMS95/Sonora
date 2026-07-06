@@ -1,10 +1,5 @@
-#include <string>
-#include <vector>
-#include <cstddef>
 #include <memory>
 #include <stdexcept>
-#include <mutex>
-#include <sndfile.h>
 #include <samplerate.h>
 #include "preprocessor.hpp"
 
@@ -147,7 +142,7 @@ std::vector<float> Preprocessor::preprocessData(const std::string& input_path, c
 {
     std::lock_guard<std::mutex> lock(prep_mtx_);
     
-    sf_info_ = {0};
+    sf_info_ = {};
 
     std::vector<float> raw      = _read(input_path);
     std::vector<float> mono     = _mono(raw);

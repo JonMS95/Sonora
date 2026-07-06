@@ -2,6 +2,7 @@
 #define SPECTRAL_ANALYZER_HPP
 
 #include <vector>
+#include <cstdint>
 #include <cstddef>
 #include <fftw3.h>
 #include "fft_processor.hpp"

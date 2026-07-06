@@ -1,6 +1,9 @@
 #ifndef AUDIO_MATCHER_HPP
 #define AUDIO_MATCHER_HPP
 
+#include <string>
+#include <cstdint>
+#include <cstddef>
 #include "audio_db_matcher.hpp"
 #include "audio_base.hpp"
 

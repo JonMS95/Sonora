@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstddef>
+#include <cstdint>
 #include <sndfile.h>
 #include <mutex>
 #include "fir_filter.hpp"

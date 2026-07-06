@@ -2,6 +2,9 @@
 #define AUDIO_BASE_HPP
 
 #include <cstddef>
+#include <cstdint>
+#include <vector>
+#include <string>
 #include <unordered_map>
 #include "preprocessor.hpp"
 #include "spectral_analyzer.hpp"

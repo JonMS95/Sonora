@@ -8,8 +8,8 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
+#include <cstdint>
 #include <iostream>
-#include <cstddef>
 #include <optional>
 #include <functional>
 #include "rq_status_enum.hpp"
@@ -193,7 +193,8 @@ void Scheduler<map_value_t>::_threadRoutine(void)
 
                 requests_.pop();
 
-                op_map_[job_id] = {.status = request_status_t::OP_ONGOING};
+                op_map_[job_id] = {};
+                op_map_[job_id].status = request_status_t::OP_ONGOING;
 
                 fsm_state = FSM_WORK;
             }
