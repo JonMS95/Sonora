@@ -2,56 +2,19 @@
 #define SONORA_HPP
 
 #include <cstdint>
-#include <queue>
+#include <cstddef>
 #include <string>
 #include <chrono>
 #include <optional>
-#include <functional>
-#include "audio_indexer.hpp"
-#include "audio_matcher.hpp"
-#include "scheduler.hpp"
+#include <memory>
 #include "rq_status_enum.hpp"
 
 // Should we make this a singleton??
 class Sonora
 {
 private:
-    using op_time_t = std::chrono::steady_clock::time_point;
-
-    // Indexing-side definitions
-    typedef struct
-    {
-        request_status_t status;
-        op_time_t expire_time;
-    } index_op_info_t;
-
-    // Indexing-side variables
-    AudioIndexer audio_indexer_;
-
-    // Matching-side definitions
-    typedef struct
-    {
-        request_status_t status;
-        op_time_t expire_time;
-        std::string ret;
-    } match_op_info_t;
-
-    // Matching-side variables
-    AudioMatcher audio_matcher_;
-
-    // Indexing-side functions
-    void _indexRoutine(void);
-
-    // Matching-side functions
-    void _matchRoutine(void);
-
-    std::function<std::optional<std::string>(const std::string&)> index_worker_;
-    std::function<void(index_op_info_t&, const std::optional<std::string>&)> index_saver_;
-    Scheduler<index_op_info_t> index_scheduler_;
-    
-    std::function<std::optional<std::string>(const std::string&)> match_worker_;
-    std::function<void(match_op_info_t&, const std::optional<std::string>&)> match_saver_;
-    Scheduler<match_op_info_t> match_scheduler_;
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 
 public:
     explicit Sonora(const uint32_t downsmp_freq                                                 ,
