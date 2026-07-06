@@ -1,7 +1,3 @@
-#include <cstdint>
-#include <vector>
-#include <cstddef>
-#include <unordered_map>
 #include "fingerprint_generator.hpp"
 
 FingerprintGenerator::FingerprintGenerator(const uint8_t window_size, const uint8_t peak_number) :

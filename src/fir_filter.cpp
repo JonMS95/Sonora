@@ -1,6 +1,4 @@
-#include <vector>
 #include <cmath>
-#include <cstddef>
 #include "fir_filter.hpp"
 
 /// @brief Creates a basic FIR filter.

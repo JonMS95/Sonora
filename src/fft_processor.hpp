@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <cstddef>
+#include <cstdint>
 #include <mutex>
 #include <fftw3.h>
 

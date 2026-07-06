@@ -1,6 +1,4 @@
-#include <string>
 #include <filesystem>
-#include <sqlite3.h>
 #include "audio_db_base.hpp"
 
 AudioDBBase::AudioDBBase(const std::string& db_path): db_(nullptr)

@@ -8,8 +8,8 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
+#include <cstdint>
 #include <iostream>
-#include <cstddef>
 #include <optional>
 #include <functional>
 #include "rq_status_enum.hpp"

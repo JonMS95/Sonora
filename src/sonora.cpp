@@ -1,13 +1,4 @@
-#include <cstddef>
-#include <queue>
-#include <string>
-#include <optional>
-#include <stdexcept>
-#include "audio_indexer.hpp"
-#include "audio_matcher.hpp"
-#include "scheduler.hpp"
 #include "sonora.hpp"
-#include "rq_status_enum.hpp"
 
 Sonora::Sonora( const uint32_t downsmp_freq                 ,
                 const std::string& db_path                  ,

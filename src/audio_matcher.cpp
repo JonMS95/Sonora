@@ -1,5 +1,3 @@
-#include <string>
-#include "audio_db_matcher.hpp"
 #include "audio_matcher.hpp"
 
 AudioMatcher::AudioMatcher( const uint32_t downsmp_freq ,

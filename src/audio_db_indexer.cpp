@@ -1,8 +1,5 @@
-#include <string>
-#include <cstddef>
 #include <filesystem>
 #include <sqlite3.h>
-#include "audio_db_base.hpp"
 #include "audio_db_indexer.hpp"
 
 AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,

@@ -2,7 +2,7 @@
 #define RUNNING_JOB_GUARD
 
 #include <atomic>
-#include <cstddef>
+#include <cstdint>
 
 class RunningJobGuard
 {

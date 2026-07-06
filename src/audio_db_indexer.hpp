@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <unordered_map>
-#include <sqlite3.h>
 #include "audio_db_base.hpp"
 
 class AudioDBIndexer : public AudioDBBase

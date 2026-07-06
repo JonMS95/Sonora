@@ -1,18 +1,16 @@
 #ifndef SONORA_HPP
 #define SONORA_HPP
 
+#include <cstdint>
 #include <queue>
 #include <string>
 #include <chrono>
 #include <optional>
-#include <unordered_map>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <functional>
 #include "audio_indexer.hpp"
 #include "audio_matcher.hpp"
 #include "scheduler.hpp"
+#include "rq_status_enum.hpp"
 
 // Should we make this a singleton??
 class Sonora

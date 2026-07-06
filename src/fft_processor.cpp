@@ -1,13 +1,10 @@
-#include <vector>
 #include <stdexcept>
 #include <cstring>
 #include <cstddef>
 #include <cmath>
 #include <queue>
-#include <unordered_set>
 #include <numeric>
-#include <fftw3.h>
-#include <mutex>
+#include <unordered_set>
 #include "fft_processor.hpp"
 
 #define SAMPLES_IN_FRAME(F_DUR, S_FREQ) (F_DUR * S_FREQ)

@@ -1,10 +1,3 @@
-#include <cstddef>
-#include <unordered_map>
-#include <string>
-#include <vector>
-#include "spectral_analyzer.hpp"
-#include "preprocessor.hpp"
-#include "fingerprint_generator.hpp"
 #include "audio_base.hpp"
 
 AudioBase::AudioBase(   const uint32_t downsmp_freq ,
