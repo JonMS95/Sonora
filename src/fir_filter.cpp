@@ -1,12 +1,19 @@
 #include <cmath>
+#include <stdexcept>
 #include "fir_filter.hpp"
 
 /// @brief Creates a basic FIR filter.
 /// @param size Number of weights.
-/// @param cutoff Cutoff coefficient value, calculated as: 0.5 * (desired cutoff frequency) / (original maximum or sampling frequency).
+/// @param cutoff Normalized cutoff frequency (Fc / Fs). Must be in the range (0.0, 0.5).
 /// @return A vectorwith FIR filter coefficients.
 FIRFilter::FIRFilter(const float cutoff, const std::size_t filter_size): kernel_(std::vector<float>(filter_size))
 {
+    if(filter_size == 0)
+        throw std::invalid_argument("FIR filter cannot have zero coefficients");
+
+    if(cutoff <= 0.0f || cutoff >= 0.5f)
+        throw std::invalid_argument("Cutoff coefficient must be in the range (0.0, 0.5) non-inclusive");
+
     std::size_t M = filter_size / 2;
     float sum = 0.0f;
 
