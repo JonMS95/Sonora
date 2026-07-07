@@ -12,6 +12,9 @@ private:
 public:
     explicit RunningJobGuard(std::atomic<uint64_t>& c);
     virtual ~RunningJobGuard(void);
+
+    RunningJobGuard(const RunningJobGuard&) = delete;
+    RunningJobGuard& operator=(const RunningJobGuard&) = delete;
 };
 
 #endif
