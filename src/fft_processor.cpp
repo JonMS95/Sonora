@@ -7,9 +7,6 @@
 #include <unordered_set>
 #include "fft_processor.hpp"
 
-#define SAMPLES_IN_FRAME(F_DUR, S_FREQ) (F_DUR * S_FREQ)
-#define NUM_OF_BINS(F_DUR, S_FREQ)  (((F_DUR * S_FREQ) / 2) + 1)
-
 constexpr std::size_t getSamplesPerFrame(const float frame_duration, const uint32_t sampling_frequency)
 {
     return static_cast<std::size_t>(frame_duration * sampling_frequency);
@@ -89,7 +86,7 @@ FFTProcessor::~FFTProcessor(void)
 std::vector<float> FFTProcessor::FFT(const std::vector<float>& frame)
 {
     if(frame.size() != samples_in_frame_)
-        throw std::runtime_error("Frame size mismatch in FFT");
+        throw std::invalid_argument("Frame size mismatch in FFT, got: " + std::to_string(frame.size()) + ", expected: " + std::to_string(samples_in_frame_));
 
     std::memcpy(frame_ptr_.get(), frame.data(), sizeof(float) * samples_in_frame_);
 
