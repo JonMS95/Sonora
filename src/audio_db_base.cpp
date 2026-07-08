@@ -90,11 +90,11 @@ void AudioDBBase::_checkParametersTable(const uint32_t downsmp_freq ,
             return std::string(value_name + ": got: " + std::to_string(provided_value) + ", expected: " + std::to_string(db_value) + " (" + ((provided_value == db_value) ? "equal" : "differ") + ")");
         };
 
-        const std::string re_str =  make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +  "\r\n" + 
-                                    make_comp_substr("Number of FIR filter coefficients",   fir_coefs,      db_fir_coefs) +     "\r\n" + 
-                                    make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +  "\r\n" + 
-                                    make_comp_substr("Feature ratio",                       feature_ratio,  db_feature_ratio) + "\r\n" + 
-                                    make_comp_substr("Window size",                         window_size,    db_window_size) +   "\r\n" + 
+        const std::string re_str =  make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +      "\r\n" + 
+                                    make_comp_substr("Number of FIR filter coefficients",   fir_coefs,      db_fir_coefs) +         "\r\n" + 
+                                    make_comp_substr("Frame duration",                      frame_duration, db_frame_duration) +    "\r\n" + 
+                                    make_comp_substr("Feature ratio",                       feature_ratio,  db_feature_ratio) +     "\r\n" + 
+                                    make_comp_substr("Window size",                         window_size,    db_window_size) +       "\r\n" + 
                                     make_comp_substr("Number of peaks",                     peak_number,    db_peak_number);
 
         throw std::runtime_error(re_str);
