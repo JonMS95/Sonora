@@ -10,20 +10,53 @@
 #define SAMPLES_IN_FRAME(F_DUR, S_FREQ) (F_DUR * S_FREQ)
 #define NUM_OF_BINS(F_DUR, S_FREQ)  (((F_DUR * S_FREQ) / 2) + 1)
 
-static inline fftwf_complex* initFFTComplex(const float frame_duration, const uint32_t sampling_frequency)
+constexpr std::size_t getSamplesPerFrame(const float frame_duration, const uint32_t sampling_frequency)
 {
-    return static_cast<fftwf_complex*>(fftwf_malloc(sizeof(fftwf_complex) * NUM_OF_BINS(frame_duration, sampling_frequency)));
+    return static_cast<std::size_t>(frame_duration * sampling_frequency);
 }
 
-static inline float* initFramePointer(const float frame_duration, const uint32_t sampling_frequency)
+constexpr std::size_t getNumberOfBins(const float frame_duration, const uint32_t sampling_frequency)
 {
-    return static_cast<float*>(fftwf_malloc(sizeof(float) * SAMPLES_IN_FRAME(frame_duration, sampling_frequency)));
+    return (((frame_duration * sampling_frequency) / 2) + 1);
 }
 
-static std::vector<std::size_t> initIndicesTemp(const float frame_duration, const uint32_t sampling_frequency)
+static inline fftwf_complex* initFFTComplex(const std::size_t number_of_bins)
 {
-    std::vector<std::size_t> ret(NUM_OF_BINS(frame_duration, sampling_frequency));
+    return static_cast<fftwf_complex*>(fftwf_malloc(sizeof(fftwf_complex) * number_of_bins));
+}
+
+static inline float* initFramePointer(const std::size_t samples_per_frame)
+{
+    return static_cast<float*>(fftwf_malloc(sizeof(float) * samples_per_frame));
+}
+
+static std::vector<std::size_t> initIndicesTemp(const std::size_t number_of_bins)
+{
+    std::vector<std::size_t> ret(number_of_bins);
     std::iota(ret.begin(), ret.end(), 0);
+
+    return ret;
+}
+
+FFTProcessor::Config FFTProcessor::makeConfig(  const float frame_duration          ,
+                                                const uint32_t sampling_frequency   ,
+                                                const uint32_t feature_ratio        )
+{
+    if(frame_duration <= 0)
+        throw std::invalid_argument("Frame duration can never be lower or equal than zero");
+    
+    if(sampling_frequency == 0)
+        throw std::invalid_argument("Sampling frequency can never be equal to zero");
+
+    if(feature_ratio == 0)
+        throw std::invalid_argument("Feature ratio can never be equal to zero");
+
+    Config ret =
+    {
+        .samples_per_frame  = getSamplesPerFrame(frame_duration, sampling_frequency),
+        .number_of_bins     = getNumberOfBins(frame_duration, sampling_frequency)   ,
+        .feature_ratio      = feature_ratio                                         ,
+    };
 
     return ret;
 }
@@ -31,15 +64,21 @@ static std::vector<std::size_t> initIndicesTemp(const float frame_duration, cons
 FFTProcessor::FFTProcessor( const float frame_duration          ,
                             const uint32_t sampling_frequency   ,
                             const uint32_t feature_ratio        ):
-    frame_ptr_(initFramePointer(frame_duration, sampling_frequency), &fftwf_free),
-    samples_in_frame_(SAMPLES_IN_FRAME(frame_duration, sampling_frequency)),
-    feat_ratio_(feature_ratio), 
-    sq_mags_(std::vector<float>(NUM_OF_BINS(frame_duration, sampling_frequency))),
-    num_of_bins_(NUM_OF_BINS(frame_duration, sampling_frequency)),
-    indices_(initIndicesTemp(frame_duration, sampling_frequency)),
-    fft_comp_(initFFTComplex(frame_duration, sampling_frequency), &fftwf_free)
+    FFTProcessor(FFTProcessor::makeConfig(  frame_duration      ,
+                                            sampling_frequency  ,
+                                            feature_ratio)      )
+{}
+
+FFTProcessor::FFTProcessor(const Config& cfg):
+    frame_ptr_(initFramePointer(cfg.samples_per_frame), &fftwf_free),
+    samples_in_frame_(cfg.samples_per_frame)                        ,
+    feat_ratio_(cfg.feature_ratio)                                  , 
+    sq_mags_(std::vector<float>(cfg.number_of_bins))                ,
+    num_of_bins_(cfg.number_of_bins)                                ,
+    indices_(initIndicesTemp(cfg.number_of_bins))                   ,
+    fft_comp_(initFFTComplex(cfg.number_of_bins), &fftwf_free)
 {
-    fft_plan_ = fftwf_plan_dft_r2c_1d(samples_in_frame_, frame_ptr_.get(), fft_comp_.get(), FFTW_ESTIMATE);
+    fft_plan_ = fftwf_plan_dft_r2c_1d(cfg.samples_per_frame, frame_ptr_.get(), fft_comp_.get(), FFTW_ESTIMATE);
 }
 
 FFTProcessor::~FFTProcessor(void)

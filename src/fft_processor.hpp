@@ -11,6 +11,13 @@
 class FFTProcessor
 {
 private:
+    struct Config
+    {
+        std::size_t samples_per_frame;
+        std::size_t number_of_bins;
+        uint32_t feature_ratio;
+    };
+
     std::unique_ptr<float, decltype(&fftwf_free)> frame_ptr_;           // Target frame to be reused by FFT process.
     const std::size_t samples_in_frame_;                                // Samples per frame.
     const std::size_t feat_ratio_;                                      // Feature ratio (number of surrounding samples to be discarded when sleecting a peak squared magnitude).
@@ -23,6 +30,12 @@ private:
 
     bool _isSqMagIndexValid(const std::size_t idx) const;
     bool _isLocalMax(const std::size_t idx) const;
+
+    static Config makeConfig(   const float frame_duration          ,
+                                const uint32_t sampling_frequency   ,
+                                const uint32_t feature_ratio        );
+
+    explicit FFTProcessor(const Config& cfg);
 
 public:
     explicit FFTProcessor(  const float frame_duration          ,
