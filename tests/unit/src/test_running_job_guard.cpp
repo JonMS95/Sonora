@@ -5,13 +5,13 @@
 #include <type_traits>
 #include "running_job_guard.hpp"
 
-TEST_CASE("Constructor with proper input parameter")
+TEST_CASE("RunningJobGuard: Constructor with proper input parameter", "[RunningJobGuard][Constructor]")
 {
     std::atomic<uint64_t> x = 0;
     REQUIRE_NOTHROW(RunningJobGuard(x));
 }
 
-TEST_CASE("Counter management")
+TEST_CASE("RunningJobGuard: Counter management", "[RunningJobGuard][counter]")
 {
     std::atomic<uint64_t> x = 0;
 
@@ -58,7 +58,7 @@ TEST_CASE("Counter management")
     }
 }
 
-TEST_CASE("RunningJobGuard is not copyable")
+TEST_CASE("RunningJobGuard: RunningJobGuard is not copyable", "[RunningJobGuard][not copyable]")
 {
     STATIC_REQUIRE(!std::is_copy_constructible<RunningJobGuard>::value);
     STATIC_REQUIRE(!std::is_copy_assignable<RunningJobGuard>::value);
