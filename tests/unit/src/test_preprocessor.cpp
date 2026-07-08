@@ -171,7 +171,7 @@ TEST_CASE("Preprocessor: Preprocess file", "[Preprocessor][preprocessData]")
         {
             Preprocessor preprocessor(file_path, 20000);
             REQUIRE_THROWS_AS(preprocessor.preprocessData("non-existing path", output_path), std::runtime_error);
-            REQUIRE(!std::filesystem::exists(output_path));
+            REQUIRE_FALSE(std::filesystem::exists(output_path));
             REQUIRE_THROWS_AS(Preprocessor::getFileSampleRate(output_path), std::runtime_error);
         }
 
@@ -180,7 +180,7 @@ TEST_CASE("Preprocessor: Preprocess file", "[Preprocessor][preprocessData]")
             const std::string& non_existing = "non/existing/path";
             Preprocessor preprocessor(file_path, 20000);
             REQUIRE_THROWS_AS(preprocessor.preprocessData(file_path, non_existing), std::runtime_error);
-            REQUIRE(!std::filesystem::exists(non_existing));
+            REQUIRE_FALSE(std::filesystem::exists(non_existing));
             REQUIRE_THROWS_AS(Preprocessor::getFileSampleRate(non_existing), std::runtime_error);
         }
     }
