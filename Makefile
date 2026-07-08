@@ -44,6 +44,8 @@ LIB_TARGET  := $(LIB_DIR)/lib$(LIB_NAME).so
 APP_TARGET  := $(BIN_DIR)/$(APP_NAME)
 TEST_TARGET := $(BIN_DIR)/$(TEST_NAME)
 
+TEST_FILES_DIR := $(CURDIR)/tests/unit/data
+
 # -----------------------------------------------------------------------------
 # Sources
 # -----------------------------------------------------------------------------
@@ -80,6 +82,8 @@ LDLIBS := \
 	-lfftw3f \
 	-lsqlite3 \
 	-lpthread
+
+TEST_CPPFLAGS := -DTEST_DATA_DIR=\"$(TEST_FILES_DIR)\"
 
 # -----------------------------------------------------------------------------
 # Build configuration
@@ -156,7 +160,7 @@ $(OBJ_DIR)/apps/cli/%.o: $(APP_DIR)/%.cpp
 $(OBJ_DIR)/tests/unit/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(patsubst $(OBJ_DIR)/%.o,$(DEP_DIR)/%.d,$@))
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(PUBLIC_INC) $(PRIVATE_INC) $(DEPFLAGS) \
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(TEST_CPPFLAGS) $(PUBLIC_INC) $(PRIVATE_INC) $(DEPFLAGS) \
 		-MF $(patsubst $(OBJ_DIR)/%.o,$(DEP_DIR)/%.d,$@) \
 		-c $< -o $@
 
