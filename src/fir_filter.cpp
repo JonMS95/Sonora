@@ -12,7 +12,7 @@ FIRFilter::FIRFilter(const float cutoff, const std::size_t filter_size): kernel_
         throw std::invalid_argument("FIR filter cannot have zero coefficients");
 
     if(cutoff <= 0.0f || cutoff >= 0.5f)
-        throw std::invalid_argument("Cutoff coefficient must be in the range (0.0, 0.5) non-inclusive");
+        throw std::invalid_argument("Cutoff coefficient must be in the range (0.0, 0.5) non-inclusive, received: " + std::to_string(cutoff));
 
     std::size_t M = filter_size / 2;
     float sum = 0.0f;
