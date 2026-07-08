@@ -162,7 +162,8 @@ std::vector<float> Preprocessor::preprocessData(const std::string& input_path, c
     if(static_cast<uint32_t>(sf_info_.samplerate) > downsmp_freq_)
         ret = _filter(ret);
 
-    ret = _resample(ret);
+    if(static_cast<uint32_t>(sf_info_.samplerate) != downsmp_freq_)
+        ret = _resample(ret);
 
     if(!output_path.empty())
         _write(ret, output_path);
