@@ -76,7 +76,7 @@ static void allElementsAreScaled(std::vector<float> normal_vec, std::vector<floa
     REQUIRE(normal_vec == scaled_vec);
 }
 
-TEST_CASE("FFT Processor: FFT", "[FFT Processor][FFT]")
+TEST_CASE("FFT Processor: computePowerSpectrum", "[FFT Processor][computePowerSpectrum]")
 {
     const float frame_duration = .2f;
     const uint32_t sampling_frequency = 1000;
