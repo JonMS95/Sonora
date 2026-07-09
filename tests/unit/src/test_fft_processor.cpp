@@ -215,7 +215,6 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
     FFTProcessor fft_proc(frame_duration, sampling_frequency, feature_ratio); // Samples per frame: 200
     std::vector<float> frame;
     const uint32_t fft_samples_per_frame = frame_duration * sampling_frequency;
-    const uint32_t number_of_bins = ((frame_duration * sampling_frequency) / 2) + 1;
 
     SECTION("Test frame size")
     {
@@ -235,6 +234,43 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
         {
             frame.resize(static_cast<std::size_t>(fft_samples_per_frame - 1));
             REQUIRE_THROWS_AS(fft_proc.featExt(frame), std::invalid_argument);
+        }
+    }
+
+    SECTION("Known responses")
+    {
+        frame.resize(static_cast<std::size_t>(fft_samples_per_frame));
+        const std::vector<std::size_t> const_elems_feats = {62, 30, 14, 6, 0, 49, 99, 23, 93, 43, 87, 81, 37, 75, 69, 55};
+
+        SECTION("All zeros")
+        {
+            frame = std::vector<float>(fft_samples_per_frame, .0f);
+
+            REQUIRE(const_elems_feats == fft_proc.featExt(frame));
+        }
+
+        SECTION("Unit impulse")
+        {
+            frame = std::vector<float>(fft_samples_per_frame, .0f);
+            frame[0] = 1;
+
+            REQUIRE(const_elems_feats == fft_proc.featExt(frame));
+        }
+
+        SECTION("Constant signal")
+        {
+            frame = std::vector<float>(fft_samples_per_frame, 2.0f);
+            std::vector<std::size_t> expected = {0, 62, 30, 14, 6, 49, 99, 23, 93, 43, 87, 81, 37, 75, 69, 55};
+
+            REQUIRE(expected == fft_proc.featExt(frame));
+        }
+
+        SECTION("Cosine signal")
+        {
+            frame = makeCosine(fft_samples_per_frame, 5);
+            std::vector<std::size_t> expected = {5, 26, 62, 41, 68, 76, 56, 85, 96, 47, 16};
+
+            REQUIRE(expected == fft_proc.featExt(frame));            
         }
     }
 }
