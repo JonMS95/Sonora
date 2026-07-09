@@ -43,7 +43,7 @@ public:
                             const uint32_t feature_ratio        );
     virtual ~FFTProcessor(void);
 
-    std::vector<float> FFT(const std::vector<float>& frame);
+    std::vector<float> computePowerSpectrum(const std::vector<float>& frame);
     std::vector<std::size_t> featExt(const std::vector<float>& frame);
 };
 

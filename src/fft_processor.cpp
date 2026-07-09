@@ -14,7 +14,7 @@ constexpr std::size_t getSamplesPerFrame(const float frame_duration, const uint3
 
 constexpr std::size_t getNumberOfBins(const float frame_duration, const uint32_t sampling_frequency)
 {
-    return (((frame_duration * sampling_frequency) / 2) + 1);
+    return ((getSamplesPerFrame(frame_duration, sampling_frequency) / 2) + 1);
 }
 
 static inline fftwf_complex* initFFTComplex(const std::size_t number_of_bins)
@@ -83,7 +83,7 @@ FFTProcessor::~FFTProcessor(void)
     fftwf_destroy_plan(fft_plan_);
 }
 
-std::vector<float> FFTProcessor::FFT(const std::vector<float>& frame)
+std::vector<float> FFTProcessor::computePowerSpectrum(const std::vector<float>& frame)
 {
     if(frame.size() != samples_in_frame_)
         throw std::invalid_argument("Frame size mismatch in FFT, got: " + std::to_string(frame.size()) + ", expected: " + std::to_string(samples_in_frame_));
@@ -129,7 +129,7 @@ std::vector<std::size_t> FFTProcessor::featExt(const std::vector<float>& frame)
 
     std::lock_guard<std::mutex> lock(fft_mtx_);
 
-    FFT(frame);
+    computePowerSpectrum(frame);
 
     std::vector<std::size_t> idcs = indices_;
     std::priority_queue<std::size_t, std::vector<std::size_t>, decltype(sort_crit)> max_heap(idcs.begin(), idcs.end(), sort_crit);
