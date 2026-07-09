@@ -109,14 +109,14 @@ bool FFTProcessor::_isSqMagIndexValid(const std::size_t idx) const
 
 bool FFTProcessor::_isLocalMax(const std::size_t idx) const
 {
-    if(!_isSqMagIndexValid(idx))
-        throw std::runtime_error("Provided index is not valid");
+    if (idx == 0)
+        return sq_mags_[0] >= sq_mags_[1];
 
-    const float cur     = sq_mags_[idx];
-    const float prev    = (idx == 0 ? -1.0 : sq_mags_[idx - 1]);
-    const float next    = (idx == (num_of_bins_ - 1) ? -1.0 : sq_mags_[idx + 1]);
-    
-    return ((prev <= cur) && (cur >= next));
+    if (idx == num_of_bins_ - 1)
+        return sq_mags_[idx] >= sq_mags_[idx - 1];
+
+    return sq_mags_[idx] >= sq_mags_[idx - 1] &&
+        sq_mags_[idx] >= sq_mags_[idx + 1];
 }
 
 std::vector<std::size_t> FFTProcessor::featExt(const std::vector<float>& frame)
