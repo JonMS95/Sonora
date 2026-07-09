@@ -4,7 +4,6 @@
 #include <cmath>
 #include <queue>
 #include <numeric>
-#include <unordered_set>
 #include "fft_processor.hpp"
 
 constexpr std::size_t getSamplesPerFrame(const float frame_duration, const uint32_t sampling_frequency)
@@ -131,23 +130,29 @@ std::vector<std::size_t> FFTProcessor::featExt(const std::vector<float>& frame)
 
     computePowerSpectrum(frame);
 
-    std::vector<std::size_t> idcs = indices_;
+    std::vector<std::size_t> idcs = indices_; // Copy of indices_, contains indices from 0 to number_of_bins_ - 1
     std::priority_queue<std::size_t, std::vector<std::size_t>, decltype(sort_crit)> max_heap(idcs.begin(), idcs.end(), sort_crit);
-    std::unordered_set<int> disc_idx;
+    std::vector<bool> discarded(num_of_bins_, false); // Set of discarded indices (either for being chosen as a local maxima or adjacent to a peak)
     std::vector<std::size_t> ret;
     std::size_t idx;
 
+    // While there are elements remaining in the heap
     while(!max_heap.empty())
     {
         idx = max_heap.top();
 
-        if(!disc_idx.count(idx) && _isLocalMax(idx))
+        // If current top element index is not in the discarded elements set and it belongs to a local maxima:
+        if (!discarded[idx] && _isLocalMax(idx))
         {
             ret.emplace_back(idx);
 
-            for(std::size_t i = (idx - feat_ratio_); i <= (idx + feat_ratio_); i++)
-                if(i < num_of_bins_)
-                    disc_idx.insert(i);
+            discarded[idx] = true;
+
+            for(std::size_t i = 1; i <= feat_ratio_ && idx >= i; ++i)
+                discarded[idx - i] = true;
+
+            for(std::size_t i = 1; i <= feat_ratio_ && idx + i < num_of_bins_; ++i)
+                discarded[idx + i] = true;
         }
 
         max_heap.pop();
