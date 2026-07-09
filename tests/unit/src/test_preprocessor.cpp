@@ -30,7 +30,7 @@ TEST_CASE("Preprocessor: Sample rate from file", "[Preprocessor][getFileSampleRa
     }
 }
 
-TEST_CASE("Preprocessor: Constructor with default/custom parameters", "[Constructor][getFileSampleRate]")
+TEST_CASE("Preprocessor: Constructor with default/custom parameters", "[Preprocessor][Constructor]")
 {
     SECTION("Constructor called by using audio file")
     {
