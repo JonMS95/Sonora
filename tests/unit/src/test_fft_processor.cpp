@@ -162,34 +162,79 @@ TEST_CASE("FFT Processor: computePowerSpectrum", "[FFT Processor][computePowerSp
             allElementsAreScaled(fft_ret_0, fft_ret_1, scale);
         }
 
-        SECTION("Linearity")
+        SECTION("Different order leads to same power spectrum")
         {
+            frame = std::vector<float>(fft_samples_per_frame);
+            std::iota(frame.begin(), frame.end(), 0);
+            std::vector<float> fft_ret = fft_proc.computePowerSpectrum(frame);
 
-        }
+            SECTION("Reverse")
+            {
+                for(std::size_t idx = 0; idx < frame.size() / 2; idx++)
+                    std::swap(frame[idx], frame[frame.size() - idx - 1]);
+                
+                REQUIRE(fft_ret == fft_proc.computePowerSpectrum(frame));
+            }
 
-        SECTION("Circular shift")
-        {
+            SECTION("Circular shift")
+            {
+                std::vector<std::vector<float>> rotated_fft_vector;
+                for(std::size_t idx = 0; idx < frame.size(); idx++)
+                {
+                    rotated_fft_vector.emplace_back(fft_proc.computePowerSpectrum(frame));
+                    std::rotate(frame.begin(), frame.begin() + 1, frame.end());
+                }
 
+                auto check_same_fft = [fft_ret](const std::vector<float>& rotated_fft) -> bool
+                {
+                    float rel_error;
+                    float eps = 1e-5f;
+
+                    for(std::size_t idx = 0; idx < fft_ret.size(); idx++)
+                    {
+                        rel_error = std::abs(fft_ret[idx] - rotated_fft[idx]) / std::max(std::abs(fft_ret[idx]), std::abs(rotated_fft[idx]));
+
+                        if(rel_error > eps)
+                            return false;
+                    }
+                    return true;
+                };
+
+                REQUIRE(std::all_of(rotated_fft_vector.begin(), rotated_fft_vector.end(), check_same_fft));
+            }
         }
     }
 }
 
-// std::vector<float> FFTProcessor::FFT(const std::vector<float>& frame)
-// {
-//     if(frame.size() != samples_in_frame_)
-//         throw std::runtime_error("Frame size mismatch in FFT");
+TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
+{
+    const float frame_duration = .2f;
+    const uint32_t sampling_frequency = 1000;
+    const uint32_t feature_ratio = 5;
 
-//     std::memcpy(frame_ptr_.get(), frame.data(), sizeof(float) * samples_in_frame_);
+    FFTProcessor fft_proc(frame_duration, sampling_frequency, feature_ratio); // Samples per frame: 200
+    std::vector<float> frame;
+    const uint32_t fft_samples_per_frame = frame_duration * sampling_frequency;
+    const uint32_t number_of_bins = ((frame_duration * sampling_frequency) / 2) + 1;
 
-//     fftwf_execute(fft_plan_);
+    SECTION("Test frame size")
+    {
+        SECTION("Samples in frame == expected")
+        {
+            frame.resize(static_cast<std::size_t>(fft_samples_per_frame));
+            REQUIRE_NOTHROW(fft_proc.featExt(frame));
+        }
 
-//     for (std::size_t k = 0; k < num_of_bins_; k++)
-//     {
-//         float re = fft_comp_.get()[k][0];
-//         float im = fft_comp_.get()[k][1];
+        SECTION("Samples in frame > expected")
+        {
+            frame.resize(static_cast<std::size_t>(fft_samples_per_frame + 1));
+            REQUIRE_THROWS_AS(fft_proc.featExt(frame), std::invalid_argument);
+        }
 
-//         sq_mags_[k] = (re * re + im * im);
-//     }
-
-//     return sq_mags_;
-// }
+        SECTION("Samples in frame < expected")
+        {
+            frame.resize(static_cast<std::size_t>(fft_samples_per_frame - 1));
+            REQUIRE_THROWS_AS(fft_proc.featExt(frame), std::invalid_argument);
+        }
+    }
+}
