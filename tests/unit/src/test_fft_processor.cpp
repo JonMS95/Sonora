@@ -8,32 +8,65 @@
 
 TEST_CASE("FFT Processor: Constructor with custom/default parameters", "[FFT Processor][Constructor]")
 {
+    const float frame_duration          = .2f   ;
+    const uint32_t sampling_frequency   = 8000  ;
+    const uint32_t feature_ratio        = 5     ;
+    const uint8_t peak_number           = 4     ;
+
     SECTION("Valid custom parameters")
     {
-        REQUIRE_NOTHROW(FFTProcessor(.2f, 8000, 5));
+        REQUIRE_NOTHROW(FFTProcessor(   frame_duration      ,
+                                        sampling_frequency  ,
+                                        feature_ratio       ,
+                                        peak_number)        );
     }
 
     SECTION("Invalid frame length")
     {
         SECTION("Frame length < 0")
         {
-            REQUIRE_THROWS_AS(FFTProcessor(-.2f, 8000, 5), std::invalid_argument);
+            REQUIRE_THROWS_AS(FFTProcessor( -frame_duration     ,
+                                            sampling_frequency  ,
+                                            feature_ratio       ,
+                                            peak_number         ),
+                                            std::invalid_argument);
         }
 
         SECTION("Frame length == 0")
         {
-            REQUIRE_THROWS_AS(FFTProcessor(0.0f, 8000, 5), std::invalid_argument);
+            REQUIRE_THROWS_AS(FFTProcessor( .0f                 ,
+                                            sampling_frequency  ,
+                                            feature_ratio       ,
+                                            peak_number         ),
+                                            std::invalid_argument);
         }
     }
 
     SECTION("Invalid sampling frequency")
     {
-        REQUIRE_THROWS_AS(FFTProcessor(.2f, 0, 5), std::invalid_argument);
+        REQUIRE_THROWS_AS(FFTProcessor( frame_duration  ,
+                                        0               ,
+                                        feature_ratio   ,
+                                        peak_number     ),
+                                        std::invalid_argument);
     }
 
     SECTION("Invalid feature ratio")
     {
-        REQUIRE_THROWS_AS(FFTProcessor(.2f, 8000, 0), std::invalid_argument);
+        REQUIRE_THROWS_AS(FFTProcessor( frame_duration      ,
+                                        sampling_frequency  ,
+                                        0                   ,
+                                        peak_number         ),
+                                        std::invalid_argument);
+    }
+
+    SECTION("Invalid number of peaks")
+    {
+        REQUIRE_THROWS_AS(FFTProcessor( frame_duration      ,
+                                        sampling_frequency  ,
+                                        feature_ratio       ,
+                                        0                   ),
+                                        std::invalid_argument);
     }
 }
 
@@ -81,8 +114,12 @@ TEST_CASE("FFT Processor: computePowerSpectrum", "[FFT Processor][computePowerSp
     const float frame_duration = .2f;
     const uint32_t sampling_frequency = 1000;
     const uint32_t feature_ratio = 5;
+    const uint8_t number_of_peaks = 4;
 
-    FFTProcessor fft_proc(frame_duration, sampling_frequency, feature_ratio); // Samples per frame: 200
+    FFTProcessor fft_proc(  frame_duration      ,
+                            sampling_frequency  ,
+                            feature_ratio       ,
+                            number_of_peaks     ); // Samples per frame: 200
     std::vector<float> frame;
     const uint32_t fft_samples_per_frame = frame_duration * sampling_frequency;
     const uint32_t number_of_bins = ((frame_duration * sampling_frequency) / 2) + 1;
@@ -211,8 +248,9 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
     const float frame_duration = .2f;
     const uint32_t sampling_frequency = 1000;
     const uint32_t feature_ratio = 5;
+    const uint8_t number_of_peaks = 4;
 
-    FFTProcessor fft_proc(frame_duration, sampling_frequency, feature_ratio); // Samples per frame: 200
+    FFTProcessor fft_proc(frame_duration, sampling_frequency, feature_ratio, number_of_peaks); // Samples per frame: 200
     std::vector<float> frame;
     const uint32_t fft_samples_per_frame = frame_duration * sampling_frequency;
 
@@ -240,7 +278,7 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
     SECTION("Known responses")
     {
         frame.resize(static_cast<std::size_t>(fft_samples_per_frame));
-        const std::vector<std::size_t> const_elems_feats = {62, 30, 14, 6, 0, 49, 99, 23, 93, 43, 87, 81, 37, 75, 69, 55};
+        const std::vector<std::size_t> const_elems_feats = {62, 30, 14, 6};
 
         SECTION("All zeros")
         {
@@ -260,7 +298,7 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
         SECTION("Constant signal")
         {
             frame = std::vector<float>(fft_samples_per_frame, 2.0f);
-            std::vector<std::size_t> expected = {0, 62, 30, 14, 6, 49, 99, 23, 93, 43, 87, 81, 37, 75, 69, 55};
+            std::vector<std::size_t> expected = {0, 62, 30, 14};
 
             REQUIRE(expected == fft_proc.featExt(frame));
         }
@@ -268,7 +306,7 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
         SECTION("Cosine signal")
         {
             frame = makeCosine(fft_samples_per_frame, 5);
-            std::vector<std::size_t> expected = {5, 26, 62, 41, 68, 76, 56, 85, 96, 47, 16};
+            std::vector<std::size_t> expected = {5, 26, 62, 41};
 
             REQUIRE(expected == fft_proc.featExt(frame));            
         }
