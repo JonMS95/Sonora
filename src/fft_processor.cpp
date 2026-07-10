@@ -36,7 +36,8 @@ static std::vector<std::size_t> initIndicesTemp(const std::size_t number_of_bins
 
 FFTProcessor::Config FFTProcessor::makeConfig(  const float frame_duration          ,
                                                 const uint32_t sampling_frequency   ,
-                                                const uint32_t feature_ratio        )
+                                                const uint32_t feature_ratio        ,
+                                                const uint8_t peak_number           )
 {
     if(frame_duration <= 0)
         throw std::invalid_argument("Frame duration can never be lower or equal than zero");
@@ -47,28 +48,35 @@ FFTProcessor::Config FFTProcessor::makeConfig(  const float frame_duration      
     if(feature_ratio == 0)
         throw std::invalid_argument("Feature ratio can never be equal to zero");
 
+    if(peak_number == 0)
+        throw std::invalid_argument("Number of features to choose cannot be zero");
+
     Config ret =
     {
         .samples_per_frame  = getSamplesPerFrame(frame_duration, sampling_frequency),
         .number_of_bins     = getNumberOfBins(frame_duration, sampling_frequency)   ,
         .feature_ratio      = feature_ratio                                         ,
+        .peak_number        = peak_number                                           ,
     };
 
     return ret;
 }
 
-FFTProcessor::FFTProcessor( const float frame_duration          ,
-                            const uint32_t sampling_frequency   ,
-                            const uint32_t feature_ratio        ):
+    FFTProcessor::FFTProcessor( const float frame_duration          ,
+                                const uint32_t sampling_frequency   ,
+                                const uint32_t feature_ratio        ,
+                                const uint8_t peak_number           ):
     FFTProcessor(FFTProcessor::makeConfig(  frame_duration      ,
                                             sampling_frequency  ,
-                                            feature_ratio)      )
+                                            feature_ratio       ,
+                                            peak_number         ))
 {}
 
 FFTProcessor::FFTProcessor(const Config& cfg):
     frame_ptr_(initFramePointer(cfg.samples_per_frame), &fftwf_free),
     samples_in_frame_(cfg.samples_per_frame)                        ,
     feat_ratio_(cfg.feature_ratio)                                  , 
+    peak_number_(cfg.peak_number)                                  ,
     sq_mags_(std::vector<float>(cfg.number_of_bins))                ,
     num_of_bins_(cfg.number_of_bins)                                ,
     indices_(initIndicesTemp(cfg.number_of_bins))                   ,
@@ -137,7 +145,7 @@ std::vector<std::size_t> FFTProcessor::featExt(const std::vector<float>& frame)
     std::size_t idx;
 
     // While there are elements remaining in the heap
-    while(!max_heap.empty())
+    while(!max_heap.empty() && ret.size() < static_cast<std::size_t>(peak_number_))
     {
         idx = max_heap.top();
 
