@@ -5,23 +5,18 @@ TEST_CASE("Fingerprint Generator: Constructor with custom parameters", "[Fingerp
 {
     SECTION("Valid custom parameters")
     {
-        REQUIRE_NOTHROW(FingerprintGenerator(5, 5));
+        REQUIRE_NOTHROW(FingerprintGenerator(5));
     }
 
     SECTION("Invalid window size")
     {
-        REQUIRE_THROWS_AS(FingerprintGenerator(0, 5), std::invalid_argument);
-    }
-
-    SECTION("Invalid number of local maxima")
-    {
-        REQUIRE_THROWS_AS(FingerprintGenerator(5, 0), std::invalid_argument);
+        REQUIRE_THROWS_AS(FingerprintGenerator(0), std::invalid_argument);
     }
 }
 
 TEST_CASE("Fingerprint Generator: genFP", "[Fingerprint Generator][genFP]")
 {
-    FingerprintGenerator fingerprint_generator(5, 5);
+    FingerprintGenerator fingerprint_generator(5);
 
     SECTION("Empty fingerprints map")
     {
@@ -30,6 +25,11 @@ TEST_CASE("Fingerprint Generator: genFP", "[Fingerprint Generator][genFP]")
 
         REQUIRE(empty_map.size() == 0);
     }
+
+    // SECTION("Known fingerprints")
+    // {
+    //     std::vector<std::vector<std::size_t>> features(0);
+    // }
 }
 
 /*
