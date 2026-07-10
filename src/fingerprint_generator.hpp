@@ -10,7 +10,6 @@ class FingerprintGenerator
 {
 private:
     const uint8_t win_size_;
-    const uint8_t peak_num_;
 
     uint32_t _hash( const std::size_t peak_a        ,
                     const std::size_t peak_b        ,
@@ -21,7 +20,7 @@ private:
                                                 const std::size_t idx_b) const;
 
 public:
-    explicit FingerprintGenerator(const uint8_t window_size, const uint8_t peak_number);
+    explicit FingerprintGenerator(const uint8_t window_size);
 
     std::unordered_map<std::size_t, std::vector<uint32_t>> genFP(const std::vector<std::vector<std::size_t>>& features) const;
 };
