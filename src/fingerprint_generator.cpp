@@ -1,8 +1,15 @@
+#include <stdexcept>
 #include "fingerprint_generator.hpp"
 
 FingerprintGenerator::FingerprintGenerator(const uint8_t window_size, const uint8_t peak_number) :
     win_size_(window_size), peak_num_(peak_number) 
-{}
+{
+    if(win_size_ == 0)
+        throw std::invalid_argument("Window size cannot be zero");
+    
+    if(peak_num_ == 0)
+        throw std::invalid_argument("Local maxima number cannot be zero");
+}
 
 uint32_t FingerprintGenerator::_hash(   const std::size_t peak_a,
                                         const std::size_t peak_b,
