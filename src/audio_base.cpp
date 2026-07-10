@@ -12,8 +12,7 @@ AudioBase::AudioBase(   const uint32_t downsmp_freq ,
                                         downsmp_freq        ,
                                         feature_ratio       ,
                                         peak_number))       ,
-    fingerprint_generator_(FingerprintGenerator(window_size ,
-                                                peak_number))
+    fingerprint_generator_(FingerprintGenerator(window_size ))
 {}
 
 uint32_t AudioBase::_getAndCreatePreprocessor(const uint32_t sample_rate)
