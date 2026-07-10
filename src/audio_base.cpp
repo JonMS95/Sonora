@@ -6,10 +6,14 @@ AudioBase::AudioBase(   const uint32_t downsmp_freq ,
                         const uint32_t feature_ratio,
                         const uint8_t window_size   ,
                         const uint8_t peak_number   ):
-    downsmp_freq_(downsmp_freq)                                                         ,
-    fir_coefs_(fir_coefs)                                                               ,
-    spectral_analyzer_(SpectralAnalyzer(frame_duration, downsmp_freq, feature_ratio))   ,
-    fingerprint_generator_(FingerprintGenerator(window_size, peak_number))
+    downsmp_freq_(downsmp_freq)                             ,
+    fir_coefs_(fir_coefs)                                   ,
+    spectral_analyzer_(SpectralAnalyzer(frame_duration      ,
+                                        downsmp_freq        ,
+                                        feature_ratio       ,
+                                        peak_number))       ,
+    fingerprint_generator_(FingerprintGenerator(window_size ,
+                                                peak_number))
 {}
 
 uint32_t AudioBase::_getAndCreatePreprocessor(const uint32_t sample_rate)
