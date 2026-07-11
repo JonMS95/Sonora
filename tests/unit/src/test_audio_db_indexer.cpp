@@ -12,6 +12,8 @@
 
 std::filesystem::path db_dir_path = std::filesystem::path(TEST_DATA_DIR);
 const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
+const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
+const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
 
 const uint32_t downsmp_freq     = 16000 ;
 const std::size_t fir_coefs     = 101   ;
@@ -408,4 +410,6 @@ TEST_CASE("Audio DB Indexer: insertFingerprints", "[Audio DB Indexer][insertFing
     }
 
     std::filesystem::remove(dummy_db_path);
+    std::filesystem::remove(dummy_db_wal_path);
+    std::filesystem::remove(dummy_db_shm_path);
 }
