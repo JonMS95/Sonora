@@ -245,8 +245,8 @@ TEST_CASE("FFT Processor: computePowerSpectrum", "[FFT Processor][computePowerSp
 
 TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
 {
-    const float frame_duration = .2f;
-    const uint32_t sampling_frequency = 1000;
+    const float frame_duration = .02f;
+    const uint32_t sampling_frequency = 16000;
     const uint32_t feature_ratio = 5;
     const uint8_t number_of_peaks = 4;
 
@@ -278,7 +278,7 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
     SECTION("Known responses")
     {
         frame.resize(static_cast<std::size_t>(fft_samples_per_frame));
-        const std::vector<std::size_t> const_elems_feats = {62, 30, 14, 6};
+        const std::vector<std::size_t> const_elems_feats = {126, 62, 30, 14};
 
         SECTION("All zeros")
         {
@@ -298,7 +298,7 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
         SECTION("Constant signal")
         {
             frame = std::vector<float>(fft_samples_per_frame, 2.0f);
-            std::vector<std::size_t> expected = {0, 62, 30, 14};
+            std::vector<std::size_t> expected = {0, 126, 62, 30};
 
             REQUIRE(expected == fft_proc.featExt(frame));
         }
@@ -306,7 +306,7 @@ TEST_CASE("FFT Processor: featExt", "[FFT Processor][featExt]")
         SECTION("Cosine signal")
         {
             frame = makeCosine(fft_samples_per_frame, 5);
-            std::vector<std::size_t> expected = {5, 26, 62, 41};
+            std::vector<std::size_t> expected = {5, 16, 24, 61};
 
             REQUIRE(expected == fft_proc.featExt(frame));            
         }
