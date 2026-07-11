@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <sqlite3.h>
 #include "audio_db_indexer.hpp"
 
 std::filesystem::path db_dir_path = std::filesystem::path(TEST_DATA_DIR);
@@ -19,21 +20,16 @@ const uint32_t feature_ratio    = 5     ;
 const uint8_t window_size       = 5     ;
 const uint8_t peak_number       = 5     ;
 
-#include <sqlite3.h>
-#include <memory>
-#include <stdexcept>
-#include <string>
-
 using sqlite_ptr_t = std::unique_ptr<sqlite3, decltype(&sqlite3_close)>;
 using statement_ptr_t = std::unique_ptr<sqlite3_stmt, decltype(&sqlite3_finalize)>;
 
-bool parametersMatch(   const std::string& db_path  ,
-                        const int downsmp_freq      ,
-                        const int fir_coefs         ,
-                        const float frame_duration  ,
-                        const int feature_ratio     ,
-                        const int window_size       ,
-                        const int peak_number       )
+bool parametersMatch(   const std::string& db_path      ,
+                        const uint32_t downsmp_freq     ,
+                        const std::size_t fir_coefs     ,
+                        const float frame_duration      ,
+                        const uint32_t feature_ratio    ,
+                        const uint8_t window_size       ,
+                        const uint8_t peak_number       )
 {
     sqlite3* raw_db = nullptr;
 
@@ -87,7 +83,7 @@ bool parametersMatch(   const std::string& db_path  ,
     return sqlite3_column_int(stmt.get(), 0) != 0;
 }
 
-bool songExists(const std::string& db_path, const int song_id, const std::string& song_name)
+bool songExists(const std::string& db_path, const uint32_t song_id, const std::string& song_name)
 {
     sqlite3* raw_db = nullptr;
 
@@ -132,7 +128,7 @@ bool songExists(const std::string& db_path, const int song_id, const std::string
     return sqlite3_column_int(stmt.get(), 0) != 0;
 }
 
-bool fingerprintExists(const std::string& db_path, const std::string& hash, const int song_id, const int frame_idx)
+bool fingerprintExists(const std::string& db_path, const std::string& hash, const uint32_t song_id, const std::size_t frame_idx)
 {
     sqlite3* raw_db = nullptr;
 
@@ -180,7 +176,7 @@ bool fingerprintExists(const std::string& db_path, const std::string& hash, cons
     return sqlite3_column_int(stmt.get(), 0) != 0;
 }
 
-bool allFingerprintsExist(const std::string& db_path, int song_id, const std::unordered_map<std::size_t, std::vector<uint32_t>>& frame_hashes)
+bool allFingerprintsExist(const std::string& db_path, uint32_t song_id, const std::unordered_map<std::size_t, std::vector<uint32_t>>& frame_hashes)
 {
     for (const auto& [frame_idx, hashes] : frame_hashes)
         for (const auto& hash : hashes)
