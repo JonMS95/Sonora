@@ -9,10 +9,10 @@ AudioDBBase::AudioDBBase(const std::string& db_path): db_(nullptr)
     if(fs_db_path.has_parent_path())
     {
         if(!std::filesystem::exists(fs_db_path.parent_path()))
-            throw std::runtime_error("Database directory does not exist: " + fs_db_path.parent_path().string());
+            throw std::invalid_argument("Database directory does not exist: " + fs_db_path.parent_path().string());
         
         if(!std::filesystem::is_directory(fs_db_path.parent_path()))
-            throw std::runtime_error("Path to database is not a directory");
+            throw std::invalid_argument("Path to database is not a directory");
     }
 
     int ret = sqlite3_open(db_path.c_str(), &db_);
