@@ -85,7 +85,7 @@ TEST_CASE("Audio Base: Constructor with default/custom parameters", "[Audio Base
                                         std::invalid_argument);
         }
 
-        SECTION("Invalid window size")
+        SECTION("Invalid number of feature peaks")
         {
             REQUIRE_THROWS_AS(AudioBase(downsmp_freq    ,
                                         fir_coefs       ,
