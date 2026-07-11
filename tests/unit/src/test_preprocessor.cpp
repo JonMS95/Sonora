@@ -7,26 +7,26 @@
 
 TEST_CASE("Preprocessor: Sample rate from file", "[Preprocessor][getFileSampleRate]")
 {
-    std::filesystem::path samples_path = std::filesystem::path(TEST_DATA_DIR);
+    std::filesystem::path samples_dir_path = std::filesystem::path(TEST_DATA_DIR);
 
     SECTION("16 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_path /= "sample_3s_16_khz.wav")) == 16000);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_16_khz.wav")) == 16000);
     }
 
     SECTION("44.1 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_path /= "sample_3s_44_1_khz.wav")) == 44100);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_44_1_khz.wav")) == 44100);
     }
 
     SECTION("48 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_path /= "sample_3s_48_khz.wav")) == 48000);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_48_khz.wav")) == 48000);
     }
 
     SECTION("96 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_path /= "sample_3s_96_khz.wav")) == 96000);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_96_khz.wav")) == 96000);
     }
 }
 
