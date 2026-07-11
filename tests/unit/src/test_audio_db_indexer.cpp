@@ -8,17 +8,17 @@
 #include "test_db_helper.hpp"
 #include "audio_db_indexer.hpp"
 
-std::filesystem::path db_dir_path = std::filesystem::path(TEST_DATA_DIR);
-const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
-const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
-const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
+static const std::filesystem::path db_dir_path = std::filesystem::path(TEST_DATA_DIR);
+static const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
+static const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
+static const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
 
-const uint32_t downsmp_freq     = 16000 ;
-const std::size_t fir_coefs     = 101   ;
-const float frame_duration      = .02f  ;
-const uint32_t feature_ratio    = 5     ;
-const uint8_t window_size       = 5     ;
-const uint8_t peak_number       = 5     ;
+static const uint32_t downsmp_freq     = 16000 ;
+static const std::size_t fir_coefs     = 101   ;
+static const float frame_duration      = .02f  ;
+static const uint32_t feature_ratio    = 5     ;
+static const uint8_t window_size       = 5     ;
+static const uint8_t peak_number       = 5     ;
 
 TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Indexer][Constructor]")
 {
