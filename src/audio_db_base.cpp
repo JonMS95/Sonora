@@ -97,7 +97,7 @@ void AudioDBBase::_checkParametersTable(const uint32_t downsmp_freq ,
                                     make_comp_substr("Window size",                         window_size,    db_window_size) +       "\r\n" + 
                                     make_comp_substr("Number of peaks",                     peak_number,    db_peak_number);
 
-        throw std::runtime_error(re_str);
+        throw std::invalid_argument(re_str);
     }
 }
 
