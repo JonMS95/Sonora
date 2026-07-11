@@ -6,6 +6,8 @@
 TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Indexer][Constructor]")
 {
     std::filesystem::path db_dir_path = std::filesystem::path(TEST_DATA_DIR);
+    const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
+    const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
     
     const uint32_t downsmp_freq     = 16000 ;
     const std::size_t fir_coefs     = 101   ;
@@ -15,9 +17,7 @@ TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Ind
     const uint8_t peak_number       = 5     ;
 
     SECTION("Existing database")
-    {
-        const std::string& samples_db_path = std::string(db_dir_path /= "sample_fingerprints.db");
-        
+    {        
         REQUIRE_NOTHROW(AudioDBIndexer( samples_db_path ,
                                         downsmp_freq    ,
                                         fir_coefs       ,
@@ -29,8 +29,6 @@ TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Ind
 
     SECTION("No existing database path but valid directory")
     {
-        const std::string& dummy_db_path = std::string(db_dir_path /= "dummy.db");
-
         REQUIRE_NOTHROW(AudioDBIndexer( dummy_db_path   ,
                                         downsmp_freq    ,
                                         fir_coefs       ,
@@ -84,7 +82,80 @@ TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Ind
                                             std::runtime_error);
     }
 
-    // SECTION("")
+    SECTION("Inconsistent input parameters (different from db\'s)")
+    {
+        SECTION("Invalid downsampling frequency")
+        {
+            REQUIRE_THROWS_AS(AudioDBIndexer(   samples_db_path ,
+                                                downsmp_freq + 1,
+                                                fir_coefs       ,
+                                                frame_duration  ,
+                                                feature_ratio   ,
+                                                window_size     ,
+                                                peak_number     ),
+                                                std::invalid_argument);
+        }
+
+        SECTION("Invalid number of FIR filter coeficients")
+        {
+            REQUIRE_THROWS_AS(AudioDBIndexer(   samples_db_path ,
+                                                downsmp_freq    ,
+                                                fir_coefs + 1   ,
+                                                frame_duration  ,
+                                                feature_ratio   ,
+                                                window_size     ,
+                                                peak_number     ),
+                                                std::invalid_argument);
+        }
+
+        SECTION("Invalid frame duration")
+        {
+            REQUIRE_THROWS_AS(AudioDBIndexer(   samples_db_path     ,
+                                                downsmp_freq        ,
+                                                fir_coefs           ,
+                                                frame_duration + .1f,
+                                                feature_ratio       ,
+                                                window_size         ,
+                                                peak_number         ),
+                                                std::invalid_argument);
+        }
+
+        SECTION("Invalid feature ratio")
+        {
+            REQUIRE_THROWS_AS(AudioDBIndexer(   samples_db_path     ,
+                                                downsmp_freq        ,
+                                                fir_coefs           ,
+                                                frame_duration      ,
+                                                feature_ratio + 1   ,
+                                                window_size         ,
+                                                peak_number         ),
+                                                std::invalid_argument);
+        }
+        
+        SECTION("Invalid window size")
+        {
+            REQUIRE_THROWS_AS(AudioDBIndexer(   samples_db_path ,
+                                                downsmp_freq    ,
+                                                fir_coefs       ,
+                                                frame_duration  ,
+                                                feature_ratio   ,
+                                                window_size + 1 ,
+                                                peak_number     ),
+                                                std::invalid_argument);
+        }
+
+        SECTION("Invalid number of feature peaks")
+        {
+            REQUIRE_THROWS_AS(AudioDBIndexer(   samples_db_path ,
+                                                downsmp_freq    ,
+                                                fir_coefs       ,
+                                                frame_duration  ,
+                                                feature_ratio   ,
+                                                window_size     ,
+                                                peak_number + 1 ),
+                                                std::invalid_argument);
+        }
+    }
 }
 
 // explicit AudioDBIndexer(const std::string& db_path  ,
