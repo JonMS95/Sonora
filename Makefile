@@ -83,6 +83,9 @@ LDLIBS := \
 	-lsqlite3 \
 	-lpthread
 
+TEST_LDLIBS := \
+	-lsqlite3
+
 TEST_CPPFLAGS := -DTEST_DATA_DIR=\"$(TEST_FILES_DIR)\"
 
 # -----------------------------------------------------------------------------
@@ -193,6 +196,7 @@ $(TEST_TARGET): $(TEST_OBJS) $(LIB_TARGET)
 	$(CXX) $(LDFLAGS) $^ \
 		-L$(LIB_DIR) \
 		-l$(LIB_NAME) \
+		$(TEST_LDLIBS) \
 		-Wl,-rpath,'$$ORIGIN/../../build/$(BUILD)/lib' \
 		-o $@
 
