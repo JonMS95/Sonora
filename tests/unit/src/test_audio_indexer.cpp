@@ -1,21 +1,20 @@
 #include <catch2/catch.hpp>
 #include <filesystem>
+#include <stdexcept>
 #include <cstddef>
 #include <cstdint>
-// #include <string>
-// #include <vector>
-// #include <unordered_map>
+#include <string>
 #include "test_db_helper.hpp"
-// #include "audio_db_indexer.hpp"
 #include "audio_indexer.hpp"
 
 static const std::filesystem::path test_data_dir_path = std::filesystem::path(TEST_DATA_DIR);
 static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
 static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
 
-static const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
-static const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
-static const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
+static const std::string& dummy_db_base = "dummy_test_audio_indexer.db";
+static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_base);
+static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
+static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
 
 static const uint32_t downsmp_freq     = 8000   ;
 static const std::size_t fir_coefs     = 51     ;
@@ -287,5 +286,50 @@ TEST_CASE("Audio Indexer: Constructor with custom parameters", "[Audio Indexer][
     }
 }
 
-// TEST_CASE("Audio Indexer: index", "[Audio Indexer][index]")
-// {}
+TEST_CASE("Audio Indexer: index", "[Audio Indexer][index]")
+{
+    AudioIndexer audio_indexer( downsmp_freq    ,
+                                dummy_db_path   ,
+                                fir_coefs       ,
+                                frame_duration  ,
+                                feature_ratio   ,
+                                window_size     ,
+                                peak_number     );
+
+    SECTION("No output path provided")
+    {
+        const std::string sample_path = std::string(full_samples_dir_path / "sample_3s_48_khz.wav");
+        const int song_id = 1;
+
+        REQUIRE_NOTHROW(audio_indexer.index(sample_path));
+        REQUIRE(DBHelper::songExists(dummy_db_path, song_id, sample_path));
+    }
+
+    SECTION("Provided output path")
+    {
+        const std::string sample_path = std::string(full_samples_dir_path / "sample_3s_16_khz.wav");
+
+        SECTION("Existing outut path")
+        {
+            const int song_id = 2;
+            const std::string output_path = std::string(full_samples_dir_path / "sample_3s_16_khz.wav.out");
+
+            REQUIRE_NOTHROW(audio_indexer.index(sample_path, output_path));
+            REQUIRE(DBHelper::songExists(dummy_db_path, song_id, sample_path));
+            REQUIRE(std::filesystem::exists(output_path));
+
+            std::filesystem::remove(output_path);
+        }
+
+        SECTION("Non-existing outut path")
+        {
+            const std::string output_path = std::string(full_samples_dir_path / "non_existing_path" / "sample_3s_16_khz.wav.out");
+
+            REQUIRE_THROWS_AS(audio_indexer.index(sample_path, output_path), std::runtime_error);
+        }
+
+        std::filesystem::remove(dummy_db_path);
+        std::filesystem::remove(dummy_db_wal_path);
+        std::filesystem::remove(dummy_db_shm_path);
+    }
+}
