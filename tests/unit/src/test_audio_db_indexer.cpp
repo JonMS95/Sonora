@@ -8,7 +8,10 @@
 #include "test_db_helper.hpp"
 #include "audio_db_indexer.hpp"
 
-static const std::filesystem::path db_dir_path = std::filesystem::path(TEST_DATA_DIR);
+static const std::filesystem::path test_data_dir_path = std::filesystem::path(TEST_DATA_DIR);
+static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
+static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
+
 static const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
 static const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
 static const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
@@ -80,7 +83,7 @@ TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Ind
 
     SECTION("Parent path to target database is not a directory")
     {
-        const std::string& non_existing_db_path = std::string(db_dir_path / "sample_3s_16_khz.wav" / "dummy.db");
+        const std::string& non_existing_db_path = std::string(full_samples_dir_path / "sample_3s_16_khz.wav" / "dummy.db");
     
         REQUIRE_THROWS_AS(AudioDBIndexer(   non_existing_db_path,
                                             downsmp_freq        ,
