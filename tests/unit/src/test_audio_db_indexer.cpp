@@ -67,6 +67,18 @@ TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Ind
         std::filesystem::remove(dummy_db_path);
     }
 
+    SECTION("No path to database was provided")
+    {
+        REQUIRE_THROWS_AS(AudioDBIndexer(   ""                  ,
+                                            downsmp_freq        ,
+                                            fir_coefs           ,
+                                            frame_duration      ,
+                                            feature_ratio       ,
+                                            window_size         ,
+                                            peak_number         ),
+                                            std::invalid_argument);
+    }
+
     SECTION("Directory in provided path does not exist")
     {
         const std::string& non_existing_db_path = std::string(db_dir_path / "non_existing_dir" / "dummy.db");
@@ -97,9 +109,9 @@ TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Ind
 
     SECTION("Valid path to a file that is not a database")
     {
-        const std::string& non_existing_db_path = std::string(db_dir_path / "not_a_db.txt");
+        const std::string& non_db_path = std::string(db_dir_path / "not_a_db.txt");
 
-        REQUIRE_THROWS_AS(AudioDBIndexer(   non_existing_db_path,
+        REQUIRE_THROWS_AS(AudioDBIndexer(   non_db_path         ,
                                             downsmp_freq        ,
                                             fir_coefs           ,
                                             frame_duration      ,

@@ -3,6 +3,9 @@
 
 AudioDBBase::AudioDBBase(const std::string& db_path): db_(nullptr)
 {
+    if(db_path.size() == 0)
+        throw std::invalid_argument("No path to database was provided");
+
     // Check whether the path to the target database exists.
     std::filesystem::path fs_db_path(db_path);
 
