@@ -18,9 +18,11 @@ static const std::filesystem::path full_samples_dir_path = test_data_dir_path / 
 static const std::filesystem::path sample_parts_dir_path = test_data_dir_path / "samples" / "sample_parts";
 
 static const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
-static const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
-static const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
-static const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
+
+static const std::string& dummy_db_base = "dummy_test_audio_db_matcher.db";;
+static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_base);
+static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
+static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
 
 static const uint32_t downsmp_freq     = 8000   ;
 static const std::size_t fir_coefs     = 51     ;
@@ -182,7 +184,6 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
     }
 }
 
-#include <iostream>
 std::filesystem::path remove_part_suffix(const std::filesystem::path& p)
 {
     std::string stem = p.stem().string();   // "sample_3s_16_khz_part_000"

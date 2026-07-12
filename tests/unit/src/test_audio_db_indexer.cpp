@@ -12,9 +12,10 @@ static const std::filesystem::path test_data_dir_path = std::filesystem::path(TE
 static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
 static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
 
-static const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
-static const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
-static const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
+static const std::string& dummy_db_base = "dummy_test_audio_db_indexer.db";
+static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_base);
+static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
+static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
 
 static const uint32_t downsmp_freq     = 8000   ;
 static const std::size_t fir_coefs     = 51     ;
