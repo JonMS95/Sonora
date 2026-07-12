@@ -52,14 +52,6 @@ TEST_CASE("Audio Indexer: Constructor with custom parameters", "[Audio Indexer][
 
             SECTION("No existing database path but valid directory")
             {
-                    // explicit AudioIndexer(  const uint32_t downsmp_freq             ,
-                    //         const std::string& db_path              ,
-                    //         const std::size_t fir_coefs     = 101   ,
-                    //         const float frame_duration      = 0.02f ,
-                    //         const uint32_t feature_ratio    = 20    ,
-                    //         const uint8_t window_size       = 5     ,
-                    //         const uint8_t peak_number       = 3     );
-
                 REQUIRE_NOTHROW(AudioIndexer(   downsmp_freq    ,
                                                 dummy_db_path   ,
                                                 fir_coefs       ,
