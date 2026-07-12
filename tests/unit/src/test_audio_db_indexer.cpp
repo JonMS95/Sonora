@@ -16,12 +16,12 @@ static const std::string& dummy_db_path = std::string(db_dir_path / "dummy.db");
 static const std::string& dummy_db_wal_path = std::string(db_dir_path / "dummy.db-wal");
 static const std::string& dummy_db_shm_path = std::string(db_dir_path / "dummy.db-shm");
 
-static const uint32_t downsmp_freq     = 16000 ;
-static const std::size_t fir_coefs     = 101   ;
-static const float frame_duration      = .02f  ;
-static const uint32_t feature_ratio    = 5     ;
-static const uint8_t window_size       = 5     ;
-static const uint8_t peak_number       = 5     ;
+static const uint32_t downsmp_freq     = 8000   ;
+static const std::size_t fir_coefs     = 51     ;
+static const float frame_duration      = .01f   ;
+static const uint32_t feature_ratio    = 10     ;
+static const uint8_t window_size       = 3      ;
+static const uint8_t peak_number       = 3      ;
 
 TEST_CASE("Audio DB Indexer: Constructor with custom parameters", "[Audio DB Indexer][Constructor]")
 {
