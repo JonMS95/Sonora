@@ -5,28 +5,29 @@
 #include <filesystem>
 #include "preprocessor.hpp"
 
-TEST_CASE("Preprocessor: Sample rate from file", "[Preprocessor][getFileSampleRate]")
-{
-    std::filesystem::path samples_dir_path = std::filesystem::path(TEST_DATA_DIR);
+static const std::filesystem::path samples_dir_path = std::filesystem::path(TEST_DATA_DIR);
+static const std::filesystem::path full_samples_dir_path  = samples_dir_path / "samples" / "full_samples";
 
+TEST_CASE("Preprocessor: Sample rate from file", "[Preprocessor][getFileSampleRate]")
+{    
     SECTION("16 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_16_khz.wav")) == 16000);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(full_samples_dir_path / "sample_3s_16_khz.wav")) == 16000);
     }
 
     SECTION("44.1 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_44_1_khz.wav")) == 44100);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(full_samples_dir_path / "sample_3s_44_1_khz.wav")) == 44100);
     }
 
     SECTION("48 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_48_khz.wav")) == 48000);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(full_samples_dir_path / "sample_3s_48_khz.wav")) == 48000);
     }
 
     SECTION("96 KHz sample")
     {
-        REQUIRE(Preprocessor::getFileSampleRate(std::string(samples_dir_path /= "sample_3s_96_khz.wav")) == 96000);
+        REQUIRE(Preprocessor::getFileSampleRate(std::string(full_samples_dir_path / "sample_3s_96_khz.wav")) == 96000);
     }
 }
 
@@ -34,7 +35,7 @@ TEST_CASE("Preprocessor: Constructor with default/custom parameters", "[Preproce
 {
     SECTION("Constructor called by using audio file")
     {
-        const std::string file_path = std::string(std::filesystem::path(TEST_DATA_DIR) /= "sample_3s_44_1_khz.wav");
+        const std::string file_path = std::string(full_samples_dir_path / "sample_3s_44_1_khz.wav");
 
         SECTION("Constructor with default parameters")
         {
@@ -105,7 +106,7 @@ TEST_CASE("Preprocessor: Constructor with default/custom parameters", "[Preproce
 
 TEST_CASE("Preprocessor: Preprocess file", "[Preprocessor][preprocessData]")
 {
-    const std::string file_path = std::string(std::filesystem::path(TEST_DATA_DIR) /= "sample_3s_48_khz.wav");
+    const std::string file_path = std::string(full_samples_dir_path / "sample_3s_48_khz.wav");
 
     SECTION("Preprocess with no output")
     {
