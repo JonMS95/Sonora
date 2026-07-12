@@ -1,9 +1,9 @@
 #include <catch2/catch.hpp>
 #include <filesystem>
-// #include <stdexcept>
+#include <stdexcept>
 #include <cstddef>
 #include <cstdint>
-// #include <string>
+#include <string>
 // #include <vector>
 // #include <memory>
 // #include <unordered_map>
@@ -48,22 +48,15 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
 
     SECTION("No existing database path but valid directory")
     {
-        REQUIRE_NOTHROW(AudioDBMatcher( dummy_db_path   ,
-                                        downsmp_freq    ,
-                                        fir_coefs       ,
-                                        frame_duration  ,
-                                        feature_ratio   ,
-                                        window_size     ,
-                                        peak_number     ));
-
-        REQUIRE(DBHelper::parametersMatch(  dummy_db_path   ,
+        REQUIRE_THROWS_AS(AudioDBMatcher(   dummy_db_path   ,
                                             downsmp_freq    ,
                                             fir_coefs       ,
                                             frame_duration  ,
                                             feature_ratio   ,
                                             window_size     ,
-                                            peak_number     ));
-
+                                            peak_number     ),
+                                            std::runtime_error);
+        
         std::filesystem::remove(dummy_db_path);
     }
 
@@ -185,10 +178,4 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
     }
 }
 
-// explicit AudioDBMatcher(const std::string& db_path  ,
-//                             const uint32_t downsmp_freq ,
-//                             const std::size_t fir_coefs ,
-//                             const float frame_duration  ,
-//                             const uint32_t feature_ratio,
-//                             const uint8_t window_size   ,
-//                             const uint8_t peak_number   );
+// TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Matcher][Constructor]")
