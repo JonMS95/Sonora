@@ -1,7 +1,7 @@
 #include <filesystem>
 #include "audio_db_base.hpp"
 
-AudioDBBase::AudioDBBase(const std::string& db_path): db_(nullptr)
+AudioDBBase::AudioDBBase(const std::string& db_path, const bool exact_path): db_(nullptr)
 {
     if(db_path.size() == 0)
         throw std::invalid_argument("No path to database was provided");
@@ -9,13 +9,21 @@ AudioDBBase::AudioDBBase(const std::string& db_path): db_(nullptr)
     // Check whether the path to the target database exists.
     std::filesystem::path fs_db_path(db_path);
 
-    if(fs_db_path.has_parent_path())
+    if(exact_path)
     {
-        if(!std::filesystem::exists(fs_db_path.parent_path()))
-            throw std::invalid_argument("Database directory does not exist: " + fs_db_path.parent_path().string());
-        
-        if(!std::filesystem::is_directory(fs_db_path.parent_path()))
-            throw std::invalid_argument("Path to database is not a directory");
+        if(!std::filesystem::exists(fs_db_path))
+            throw std::invalid_argument("Provided path does not belong to a valid database (exact match required)");
+    }
+    else
+    {
+        if(fs_db_path.has_parent_path())
+        {
+            if(!std::filesystem::exists(fs_db_path.parent_path()))
+                throw std::invalid_argument("Database directory does not exist: " + fs_db_path.parent_path().string());
+            
+            if(!std::filesystem::is_directory(fs_db_path.parent_path()))
+                throw std::invalid_argument("Path to database is not a directory");
+        }
     }
 
     int ret = sqlite3_open(db_path.c_str(), &db_);

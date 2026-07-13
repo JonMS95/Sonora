@@ -29,7 +29,7 @@ protected:
                                         const uint8_t peak_number   ) const = 0;
 
 public:
-    explicit AudioDBBase(const std::string& db_path);
+    explicit AudioDBBase(const std::string& db_path, const bool exact_path);
     virtual ~AudioDBBase(void);
 };
 
