@@ -11,6 +11,8 @@ static const std::filesystem::path test_data_dir_path = std::filesystem::path(TE
 static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
 static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
 
+static const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
+
 static const std::string& dummy_db_base = "dummy_test_audio_matcher.db";
 static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_base);
 static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
@@ -267,4 +269,68 @@ TEST_CASE("Audio Matcher: Constructor with custom parameters", "[Audio Matcher][
                                             std::invalid_argument);
         }
     }
+}
+
+static std::filesystem::path removePartSuffix(const std::filesystem::path& p)
+{
+    std::string stem = p.stem().string();   // "sample_3s_16_khz_part_000"
+    constexpr std::string_view marker = "_part_";
+
+    auto pos = stem.rfind(marker);
+    if (pos != std::string::npos)
+        stem.erase(pos);
+
+    return p.parent_path() / (stem + p.extension().string());
+}
+
+static bool checkAllPartFingerprints(   const std::filesystem::path sample_parts_dir_path   ,
+                                        const std::string& db_path                          ,
+                                        const uint32_t downsmp_freq                         ,
+                                        const std::size_t fir_coefs                         ,
+                                        const float frame_duration                          ,
+                                        const uint32_t feature_ratio                        ,
+                                        const uint8_t window_size                           ,
+                                        const uint8_t peak_number                           )
+{
+    AudioMatcher audio_matcher( downsmp_freq    ,
+                                db_path         ,
+                                fir_coefs       ,
+                                frame_duration  ,
+                                feature_ratio   ,
+                                window_size     ,
+                                peak_number     );
+
+    std::filesystem::path input;
+    std::filesystem::path expected;
+    std::filesystem::path matcher_output_file;
+
+    for (const auto& entry : std::filesystem::directory_iterator(sample_parts_dir_path))
+    {
+        if (!entry.is_regular_file())
+            continue;
+
+        input = entry.path();
+        expected = removePartSuffix(input);
+        
+        matcher_output_file = audio_matcher.match(input);
+
+        if(expected.filename() != matcher_output_file.filename())
+            return false;
+    }
+
+    return true;
+}
+
+TEST_CASE("Audio Matcher: match", "[Audio Matcher][match]")
+{
+    const std::filesystem::path sample_parts_dir_path = test_data_dir_path / "samples" / "sample_parts";
+
+    REQUIRE(checkAllPartFingerprints(   sample_parts_dir_path   ,
+                                        samples_db_path         ,
+                                        downsmp_freq            ,
+                                        fir_coefs               ,
+                                        frame_duration          ,
+                                        feature_ratio           ,
+                                        window_size             ,
+                                        peak_number             ));
 }
