@@ -35,12 +35,12 @@ public:
     // Matching-side functions
     void _matchRoutine(void);
 
-    std::function<std::optional<std::string>(const std::string&)> index_worker_;
-    std::function<void(index_op_info_t&, const std::optional<std::string>&)> index_saver_;
+    std::function<Scheduler<index_op_info_t>::work_fn_sig_t> index_worker_;
+    std::function<Scheduler<index_op_info_t>::save_fn_sig_t> index_saver_;
     Scheduler<index_op_info_t> index_scheduler_;
     
-    std::function<std::optional<std::string>(const std::string&)> match_worker_;
-    std::function<void(match_op_info_t&, const std::optional<std::string>&)> match_saver_;
+    std::function<Scheduler<match_op_info_t>::work_fn_sig_t> match_worker_;
+    std::function<Scheduler<match_op_info_t>::save_fn_sig_t> match_saver_;
     Scheduler<match_op_info_t> match_scheduler_;
 
     Impl(const uint32_t downsmp_freq                 ,
