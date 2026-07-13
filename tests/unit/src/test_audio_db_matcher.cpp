@@ -52,7 +52,7 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
                                             peak_number     ));
     }
 
-    SECTION("No existing database path but valid directory")
+    SECTION("Valid directory but not a database path")
     {
         REQUIRE_THROWS_AS(AudioDBMatcher(   dummy_db_path   ,
                                             downsmp_freq    ,
@@ -61,7 +61,7 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
                                             feature_ratio   ,
                                             window_size     ,
                                             peak_number     ),
-                                            std::runtime_error);
+                                            std::invalid_argument);
         
         std::filesystem::remove(dummy_db_path);
     }
