@@ -9,7 +9,7 @@ AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
                                 const uint32_t feature_ratio,
                                 const uint8_t window_size   ,
                                 const uint8_t peak_number   ):
-    AudioDBBase(db_path)
+    AudioDBBase(db_path, false)
 {
     AudioDBBase::_enableWAL();
     _manageParametersTable( downsmp_freq    ,
