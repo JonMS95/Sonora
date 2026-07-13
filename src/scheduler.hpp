@@ -163,6 +163,12 @@ void Scheduler<map_value_t>::end(void)
 template <typename map_value_t>
 std::optional<uint64_t> Scheduler<map_value_t>::enqueueJob(const std::string& file_path)
 {
+    if(!file_path.size())
+        throw std::invalid_argument("Null path was provided");
+    
+    if(!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path))
+        throw std::invalid_argument("Provided path does not belong to a regular file")
+
     // If queue is already full, then exit immediately.
     if(static_cast<uint64_t>(requests_.size()) >= max_rqs_)
         return std::nullopt;
