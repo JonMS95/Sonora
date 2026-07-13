@@ -111,9 +111,3 @@ TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Construc
                                                     max_match_threads       ));
     }
 }
-
-// explicit Scheduler( std::function<work_fn_sig_t> work_fn        ,
-//                     std::function<save_fn_sig_t> save_fn        ,
-//                     const uint64_t max_rqs                  = 10,
-//                     const std::chrono::minutes expire_mins  = 10,
-//                     const uint64_t max_threads              = 10);
