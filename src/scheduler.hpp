@@ -50,6 +50,23 @@ private:
     std::function<work_fn_sig_t> work_fn_;
     std::function<save_fn_sig_t> save_fn_;
 
+    struct Config
+    {
+        std::function<work_fn_sig_t> work_fn  ;
+        std::function<save_fn_sig_t> save_fn  ;
+        const uint64_t max_rqs                ;
+        const std::chrono::minutes expire_mins;
+        const uint64_t max_threads            ;
+    };
+
+    static Config makeConfig(   std::function<work_fn_sig_t> work_fn    ,
+                                std::function<save_fn_sig_t> save_fn    ,
+                                const uint64_t max_rqs                  ,
+                                const std::chrono::minutes expire_mins  ,
+                                const uint64_t max_threads              );
+
+    explicit Scheduler(const Config& cfg);
+
 public:
     explicit Scheduler( std::function<work_fn_sig_t> work_fn        ,
                         std::function<save_fn_sig_t> save_fn        ,
@@ -68,21 +85,55 @@ public:
 };
 
 template <typename map_value_t>
+Scheduler<map_value_t>::Config Scheduler<map_value_t>::makeConfig(  std::function<work_fn_sig_t> work_fn    ,
+                                                                    std::function<save_fn_sig_t> save_fn    ,
+                                                                    const uint64_t max_rqs                  ,
+                                                                    const std::chrono::minutes expire_mins  ,
+                                                                    const uint64_t max_threads              )
+{
+    if(expire_mins == std::chrono::minutes{0})
+        throw std::invalid_argument("Minutes to expire cannot be 0");
+    
+    if(max_rqs != 0 && max_threads == 0)
+        throw std::invalid_argument("Number of threads cannot be zero if a non-null queue exists");
+    
+    Config cfg =
+    {
+        .work_fn        = work_fn    ,
+        .save_fn        = save_fn    ,
+        .max_rqs        = max_rqs    ,
+        .expire_mins    = expire_mins,
+        .max_threads    = max_threads,
+    };
+
+    return cfg;
+}
+
+template <typename map_value_t>
+Scheduler<map_value_t>::Scheduler(const Config& cfg):
+    max_rqs_(cfg.max_rqs)           ,
+    job_id_(0)                      ,
+    keep_running_(false)            ,
+    expire_mins_(cfg.expire_mins)   ,
+    ongoing_jobs_(0)                ,
+    work_fn_(cfg.work_fn)           ,
+    save_fn_(cfg.save_fn)           
+{
+    thread_pool_.resize(cfg.max_threads);
+}
+
+template <typename map_value_t>
 Scheduler<map_value_t>::Scheduler(  std::function<work_fn_sig_t> work_fn    ,
                                     std::function<save_fn_sig_t> save_fn    ,
                                     const uint64_t max_rqs                  ,
                                     const std::chrono::minutes expire_mins  ,
                                     const uint64_t max_threads              ):
-    max_rqs_(max_rqs)           ,
-    job_id_(0)                  ,
-    keep_running_(false)        ,
-    expire_mins_(expire_mins)   ,
-    ongoing_jobs_(0)            ,
-    work_fn_(work_fn)           ,
-    save_fn_(save_fn)           
-{
-    thread_pool_.resize(max_threads);
-}
+    Scheduler<map_value_t>(Scheduler<map_value_t>::makeConfig(  work_fn     ,
+                                                                save_fn     ,
+                                                                max_rqs     ,
+                                                                expire_mins ,
+                                                                max_threads ))
+{}
 
 template <typename map_value_t>
 Scheduler<map_value_t>::~Scheduler(void)
