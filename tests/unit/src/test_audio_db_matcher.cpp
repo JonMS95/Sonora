@@ -184,7 +184,7 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
     }
 }
 
-static std::filesystem::path remove_part_suffix(const std::filesystem::path& p)
+static std::filesystem::path removePartSuffix(const std::filesystem::path& p)
 {
     std::string stem = p.stem().string();   // "sample_3s_16_khz_part_000"
     constexpr std::string_view marker = "_part_";
@@ -196,9 +196,16 @@ static std::filesystem::path remove_part_suffix(const std::filesystem::path& p)
     return p.parent_path() / (stem + p.extension().string());
 }
 
-static bool checkAllPartFingerprints(const std::filesystem::path sample_parts_dir_path)
+static bool checkAllPartFingerprints(   const std::filesystem::path sample_parts_dir_path   ,
+                                        const std::string& db_path                          ,
+                                        const uint32_t downsmp_freq                         ,
+                                        const std::size_t fir_coefs                         ,
+                                        const float frame_duration                          ,
+                                        const uint32_t feature_ratio                        ,
+                                        const uint8_t window_size                           ,
+                                        const uint8_t peak_number                           )
 {
-    AudioDBMatcher audio_db_matcher(samples_db_path ,
+    AudioDBMatcher audio_db_matcher(db_path         ,
                                     downsmp_freq    ,
                                     fir_coefs       ,
                                     frame_duration  ,
@@ -223,7 +230,7 @@ static bool checkAllPartFingerprints(const std::filesystem::path sample_parts_di
             continue;
 
         input = entry.path();
-        expected = remove_part_suffix(input);
+        expected = removePartSuffix(input);
 
         sample_rate = Preprocessor::getFileSampleRate(input);
         preprocessor_map.try_emplace(sample_rate, sample_rate, downsmp_freq, fir_coefs);
@@ -242,7 +249,14 @@ static bool checkAllPartFingerprints(const std::filesystem::path sample_parts_di
 
 TEST_CASE("Audio DB Matcher: queryHashes", "[Audio DB Matcher][queryHashes]")
 {
-    static const std::filesystem::path sample_parts_dir_path = test_data_dir_path / "samples" / "sample_parts";
+    const std::filesystem::path sample_parts_dir_path = test_data_dir_path / "samples" / "sample_parts";
 
-    REQUIRE(checkAllPartFingerprints(sample_parts_dir_path));
+    REQUIRE(checkAllPartFingerprints(   sample_parts_dir_path   ,
+                                        samples_db_path         ,
+                                        downsmp_freq            ,
+                                        fir_coefs               ,
+                                        frame_duration          ,
+                                        feature_ratio           ,
+                                        window_size             ,
+                                        peak_number             ));
 }
