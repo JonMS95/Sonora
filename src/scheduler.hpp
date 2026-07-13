@@ -12,6 +12,7 @@
 #include <iostream>
 #include <optional>
 #include <functional>
+#include <filesystem>
 #include "rq_status_enum.hpp"
 #include "running_job_guard.hpp"
 
@@ -166,8 +167,8 @@ std::optional<uint64_t> Scheduler<map_value_t>::enqueueJob(const std::string& fi
     if(!file_path.size())
         throw std::invalid_argument("Null path was provided");
     
-    if(!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path))
-        throw std::invalid_argument("Provided path does not belong to a regular file")
+    if(!std::filesystem::exists(file_path) || !std::filesystem::is_regular_file(file_path))
+        throw std::invalid_argument("Provided path does not belong to a regular file");
 
     // If queue is already full, then exit immediately.
     if(static_cast<uint64_t>(requests_.size()) >= max_rqs_)
