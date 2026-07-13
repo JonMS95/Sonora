@@ -1,12 +1,24 @@
 #include "running_job_guard.hpp"
 
 RunningJobGuard::RunningJobGuard(std::atomic<uint64_t>& c):
-    counter(c)
+    counter_(c),
+    active_(false)
 {
-    ++counter;
 }
 
 RunningJobGuard::~RunningJobGuard(void)
 {
-    --counter;
+    if (active_)
+        --counter_;
+}
+
+RunningJobGuard& RunningJobGuard::operator++()
+{
+    if (!active_)
+    {
+        ++counter_;
+        active_ = true;
+    }
+
+    return *this;
 }
