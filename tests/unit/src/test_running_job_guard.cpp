@@ -1,5 +1,4 @@
 #include <catch2/catch.hpp>
-#include <stdexcept>
 #include <atomic>
 #include <cstdint>
 #include <type_traits>
@@ -8,23 +7,36 @@
 TEST_CASE("RunningJobGuard: Constructor with proper input parameter", "[RunningJobGuard][Constructor]")
 {
     std::atomic<uint64_t> x = 0;
+
     REQUIRE_NOTHROW(RunningJobGuard(x));
+    REQUIRE(x == 0);
 }
 
 TEST_CASE("RunningJobGuard: Counter management", "[RunningJobGuard][counter]")
 {
     std::atomic<uint64_t> x = 0;
 
+    SECTION("Inactive guard does not increment counter")
+    {
+        RunningJobGuard guard(x);
+        REQUIRE(x == 0);
+    }
+
     SECTION("Increment counter")
     {
         RunningJobGuard guard(x);
+
+        ++guard;
+
         REQUIRE(x == 1);
     }
 
-    SECTION("Decrement counter")
+    SECTION("Decrement counter after activation")
     {
         {
             RunningJobGuard guard(x);
+
+            ++guard;
             REQUIRE(x == 1);
         }
 
@@ -34,9 +46,12 @@ TEST_CASE("RunningJobGuard: Counter management", "[RunningJobGuard][counter]")
     SECTION("Multiple guards accumulate")
     {
         RunningJobGuard guard_0(x);
+        RunningJobGuard guard_1(x);
+
+        ++guard_0;
         REQUIRE(x == 1);
 
-        RunningJobGuard guard_1(x);
+        ++guard_1;
         REQUIRE(x == 2);
     }
 
@@ -44,12 +59,31 @@ TEST_CASE("RunningJobGuard: Counter management", "[RunningJobGuard][counter]")
     {
         {
             RunningJobGuard guard_0(x);
+            ++guard_0;
+
             REQUIRE(x == 1);
 
             {
                 RunningJobGuard guard_1(x);
+                ++guard_1;
+
                 REQUIRE(x == 2);
             }
+
+            REQUIRE(x == 1);
+        }
+
+        REQUIRE(x == 0);
+    }
+
+    SECTION("Multiple increments on the same guard do not double count")
+    {
+        {
+            RunningJobGuard guard(x);
+
+            ++guard;
+            ++guard;
+            ++guard;
 
             REQUIRE(x == 1);
         }
