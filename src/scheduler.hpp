@@ -21,12 +21,6 @@ class Scheduler
 private:
     using op_time_t = std::chrono::steady_clock::time_point;
 
-    typedef enum
-    {
-        FSM_IDLE = 0,
-        FSM_WORK    ,
-    } fsm_state_t;
-
     const uint64_t max_rqs_;
     uint64_t job_id_;
     std::queue<std::pair<uint64_t, std::string>> requests_;
@@ -219,7 +213,6 @@ void Scheduler<map_value_t>::_threadRoutine(void)
     uint64_t job_id;
     std::string file_path;
     request_status_t result;
-    fsm_state_t fsm_state = FSM_IDLE;
 
     using work_fn_ret_t = std::optional<std::string>;
 
@@ -227,64 +220,48 @@ void Scheduler<map_value_t>::_threadRoutine(void)
 
     while(keep_running_)
     {
-        switch (fsm_state)
+        RunningJobGuard job_guard(ongoing_jobs_);
+
         {
-            case FSM_IDLE:
-            {
-                // Wait for the condition variable to be raise (which will lead the current thread to be awakened).
-                std::unique_lock<std::mutex> lock(mtx_);
+            // Wait for the condition variable to be raise (which will lead the current thread to be awakened).
+            std::unique_lock<std::mutex> lock(mtx_);
+            cv_.wait(lock, [this] { return !requests_.empty() || !keep_running_; });
 
-                cv_.wait(lock, [this] { return !requests_.empty() || !keep_running_; });
+            if(!keep_running_)
+                break;
 
-                if(!keep_running_)
-                    break;
+            // Increment number of ongoing jobs before popping elements from queue. 
+            ++job_guard;
 
-                job_id = requests_.front().first;
-                file_path = requests_.front().second;
+            job_id = requests_.front().first;
+            file_path = requests_.front().second;
+            requests_.pop();
 
-                requests_.pop();
+            op_map_[job_id] = {};
+            op_map_[job_id].status = request_status_t::OP_ONGOING;
+        }
 
-                op_map_[job_id] = {};
-                op_map_[job_id].status = request_status_t::OP_ONGOING;
+        try
+        {
+            // Use constructor/template-provided function here.
+            ret_work = work_fn_(file_path);
+            result = request_status_t::OP_OK;
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+            result = request_status_t::OP_ERROR;
+        }
 
-                fsm_state = FSM_WORK;
-            }
-            break;
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
 
-            case FSM_WORK:
-            {
-                RunningJobGuard job_guard(ongoing_jobs_);
+            auto& op = op_map_.at(job_id);
 
-                try
-                {
-                    // Use constructor/template-provided function here.
-                    ret_work = work_fn_(file_path);
-                    result = request_status_t::OP_OK;
-                }
-                catch(const std::exception& e)
-                {
-                    std::cerr << e.what() << std::endl;
-                    result = request_status_t::OP_ERROR;
-                }
+            op.status = result;
+            op.expire_time = std::chrono::steady_clock::now() + expire_mins_;
 
-                std::lock_guard<std::mutex> lock(mtx_);
-
-                auto& op = op_map_.at(job_id);
-
-                op.status = result;
-                op.expire_time = std::chrono::steady_clock::now() + expire_mins_;
-
-                save_fn_(op, ret_work);
-
-                fsm_state = FSM_IDLE;
-            }
-            break;
-        
-            default:
-            {
-                throw std::runtime_error("Unknown status reached: " + std::to_string(static_cast<int>(fsm_state)));
-            }
-            break;
+            save_fn_(op, ret_work);
         }
     }
 }
