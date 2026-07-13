@@ -184,7 +184,7 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
     }
 }
 
-std::filesystem::path remove_part_suffix(const std::filesystem::path& p)
+static std::filesystem::path remove_part_suffix(const std::filesystem::path& p)
 {
     std::string stem = p.stem().string();   // "sample_3s_16_khz_part_000"
     constexpr std::string_view marker = "_part_";
@@ -196,7 +196,7 @@ std::filesystem::path remove_part_suffix(const std::filesystem::path& p)
     return p.parent_path() / (stem + p.extension().string());
 }
 
-bool checkAllPartFingerprints(const std::filesystem::path sample_parts_dir_path)
+static bool checkAllPartFingerprints(const std::filesystem::path sample_parts_dir_path)
 {
     AudioDBMatcher audio_db_matcher(samples_db_path ,
                                     downsmp_freq    ,
