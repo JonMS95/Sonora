@@ -169,6 +169,11 @@ bool Sonora::hasOngoingIndexOps(void) const
     return impl_->index_scheduler_.hasOngoingOps();
 }
 
+bool Sonora::isIndexerRunning(void) const
+{
+    return impl_->index_scheduler_.isSchedulerRunning();
+}
+
 request_status_t Sonora::getIndexStatus(const uint64_t job_id)
 {
     return impl_->index_scheduler_.getJobStatus(job_id);
@@ -187,6 +192,11 @@ bool Sonora::hasPendingMatchOps(void) const
 bool Sonora::hasOngoingMatchOps(void) const
 {
     return impl_->match_scheduler_.hasOngoingOps();
+}
+
+bool Sonora::isMatcherRunning(void) const
+{
+    return impl_->match_scheduler_.isSchedulerRunning();
 }
 
 request_status_t Sonora::getMatchStatus(const uint64_t job_id)
