@@ -163,3 +163,178 @@ TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Construc
         }
     }
 }
+
+TEST_CASE("Scheduler: run", "[Scheduler][run]")
+{
+    SECTION("Index-oriented scheduler")
+    {
+        SECTION("Execute run method once")
+        {
+            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
+                                                        index_saver             ,
+                                                        max_index_rqs           ,
+                                                        index_expire_mins       ,
+                                                        max_index_threads       );
+            REQUIRE_NOTHROW(index_scheduler.run());
+            REQUIRE(index_scheduler.isSchedulerRunning());
+        }
+
+        SECTION("Execute run method twice")
+        {
+            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
+                                                        index_saver             ,
+                                                        max_index_rqs           ,
+                                                        index_expire_mins       ,
+                                                        max_index_threads       );
+            REQUIRE_NOTHROW(index_scheduler.run());
+            REQUIRE(index_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(index_scheduler.run());
+            REQUIRE(index_scheduler.isSchedulerRunning());
+        }
+    }
+
+    SECTION("Match-oriented scheduler")
+    {
+        SECTION("Execute run method once")
+        {
+            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
+                                                        match_saver             ,
+                                                        max_match_rqs           ,
+                                                        match_expire_mins       ,
+                                                        max_match_threads       );
+            REQUIRE_NOTHROW(match_scheduler.run());
+            REQUIRE(match_scheduler.isSchedulerRunning());
+        }
+
+        SECTION("Execute run method twice")
+        {
+            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
+                                                        match_saver             ,
+                                                        max_match_rqs           ,
+                                                        match_expire_mins       ,
+                                                        max_match_threads       );
+            REQUIRE_NOTHROW(match_scheduler.run());
+            REQUIRE(match_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(match_scheduler.run());
+            REQUIRE(match_scheduler.isSchedulerRunning());
+        }
+    }
+}
+
+TEST_CASE("Scheduler: end", "[Scheduler][end]")
+{
+    SECTION("Index-oriented scheduler")
+    {
+        SECTION("Execute end method once")
+        {
+            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
+                                                        index_saver             ,
+                                                        max_index_rqs           ,
+                                                        index_expire_mins       ,
+                                                        max_index_threads       );
+            REQUIRE_NOTHROW(index_scheduler.run());
+            REQUIRE(index_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(index_scheduler.end());
+            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
+        }
+
+        SECTION("Execute end method twice")
+        {
+            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
+                                                        index_saver             ,
+                                                        max_index_rqs           ,
+                                                        index_expire_mins       ,
+                                                        max_index_threads       );
+            REQUIRE_NOTHROW(index_scheduler.run());
+            REQUIRE(index_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(index_scheduler.end());
+            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(index_scheduler.end());
+            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
+        }
+
+        SECTION("Execute end method with no preceeding run")
+        {
+            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
+                                                        index_saver             ,
+                                                        max_index_rqs           ,
+                                                        index_expire_mins       ,
+                                                        max_index_threads       );
+            REQUIRE_NOTHROW(index_scheduler.end());
+            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
+        }
+    }
+
+    SECTION("Match-oriented scheduler")
+    {
+        SECTION("Execute end method once")
+        {
+            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
+                                                        match_saver             ,
+                                                        max_match_rqs           ,
+                                                        match_expire_mins       ,
+                                                        max_match_threads       );
+            REQUIRE_NOTHROW(match_scheduler.run());
+            REQUIRE(match_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(match_scheduler.end());
+            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
+        }
+
+        SECTION("Execute end method twice")
+        {
+            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
+                                                        match_saver             ,
+                                                        max_match_rqs           ,
+                                                        match_expire_mins       ,
+                                                        max_match_threads       );
+            REQUIRE_NOTHROW(match_scheduler.run());
+            REQUIRE(match_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(match_scheduler.end());
+            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
+            REQUIRE_NOTHROW(match_scheduler.end());
+            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
+        }
+
+        SECTION("Execute end method with no preceeding run")
+        {
+            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
+                                                        match_saver             ,
+                                                        max_match_rqs           ,
+                                                        match_expire_mins       ,
+                                                        max_match_threads       );
+            REQUIRE_NOTHROW(match_scheduler.end());
+            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
+        }
+    }
+}
+
+// TEST_CASE("Scheduler: enqueueJob", "[Scheduler][enqueueJob]")
+// {
+//     SECTION("Index-oriented scheduler")
+//     {
+//         SECTION("Push to full / null queue")
+//         {
+//             Scheduler<index_op_info_t> index_scheduler( index_worker            ,
+//                                                         index_saver             ,
+//                                                         0                       ,
+//                                                         index_expire_mins       ,
+//                                                         0                       );
+//             REQUIRE_NOTHROW(index_scheduler.run());
+            
+//         }
+//     }
+
+//     SECTION("Match-oriented scheduler")
+//     {
+//         SECTION("Execute end method once")
+//         {
+//             Scheduler<match_op_info_t> match_scheduler( match_worker            ,
+//                                                         match_saver             ,
+//                                                         max_match_rqs           ,
+//                                                         match_expire_mins       ,
+//                                                         max_match_threads       );
+//             REQUIRE_NOTHROW(match_scheduler.run());
+//             REQUIRE_NOTHROW(match_scheduler.end());
+//         }
+//     }
+// }
