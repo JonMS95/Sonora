@@ -75,6 +75,7 @@ public:
     request_status_t getJobStatus(const uint64_t job_id);
     bool hasPendingOps(void) const;
     bool hasOngoingOps(void) const;
+    bool isSchedulerRunning() const;
     map_value_t getJobResult(const uint64_t job_id) const;
 };
 
@@ -139,6 +140,9 @@ Scheduler<map_value_t>::~Scheduler(void)
 template <typename map_value_t>
 void Scheduler<map_value_t>::run(void)
 {
+    if(keep_running_)
+        return;
+
     keep_running_ = true;
     for(std::thread& t : thread_pool_)
         t = std::thread(&Scheduler<map_value_t>::_threadRoutine, this);
@@ -276,6 +280,12 @@ template <typename map_value_t>
 bool Scheduler<map_value_t>::hasOngoingOps(void) const
 {
     return (ongoing_jobs_ > 0);
+}
+
+template <typename map_value_t>
+bool Scheduler<map_value_t>::isSchedulerRunning() const
+{
+    return keep_running_;
 }
 
 template <typename map_value_t>
