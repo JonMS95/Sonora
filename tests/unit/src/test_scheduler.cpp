@@ -52,11 +52,7 @@ typedef struct
     std::string ret;
 } match_op_info_t;
 
-TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Constructor]")
-{
-    SECTION("Index-oriented Scheduler instance with proper parameters")
-    {
-        AudioIndexer audio_indexer( downsmp_freq    ,
+static  AudioIndexer audio_indexer( downsmp_freq    ,
                                     samples_db_path ,
                                     fir_coefs       ,
                                     frame_duration  ,
@@ -64,26 +60,17 @@ TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Construc
                                     window_size     ,
                                     peak_number     );
 
-        std::function<Scheduler<index_op_info_t>::work_fn_sig_t> index_worker =
-            [&](const std::string& file) -> std::optional<std::string>
+static  std::function<Scheduler<index_op_info_t>::work_fn_sig_t> index_worker =
+            [](const std::string& file) -> std::optional<std::string>
             {
                 audio_indexer.index(file);
                 return std::nullopt;
             };
 
-        std::function<Scheduler<index_op_info_t>::save_fn_sig_t> index_saver = 
+static  std::function<Scheduler<index_op_info_t>::save_fn_sig_t> index_saver = 
             [](index_op_info_t&, const std::optional<std::string>&) -> void {};
 
-        REQUIRE_NOTHROW(Scheduler<index_op_info_t>( index_worker            ,
-                                                    index_saver             ,
-                                                    max_index_rqs           ,
-                                                    index_expire_mins       ,
-                                                    max_index_threads       ));
-    }
-
-    SECTION("Match-oriented Scheduler instance with proper parameters")
-    {
-        AudioMatcher audio_matcher( downsmp_freq    ,
+static  AudioMatcher audio_matcher( downsmp_freq    ,
                                     samples_db_path ,
                                     fir_coefs       ,
                                     frame_duration  ,
@@ -91,23 +78,88 @@ TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Construc
                                     window_size     ,
                                     peak_number     );
 
-        std::function<Scheduler<match_op_info_t>::work_fn_sig_t> match_worker =
-            [&](const std::string& file) -> std::optional<std::string>
-            {
-                return audio_matcher.match(file);
-            };
+static  std::function<Scheduler<match_op_info_t>::work_fn_sig_t> match_worker =
+    [](const std::string& file) -> std::optional<std::string>
+    {
+        return audio_matcher.match(file);
+    };
 
-        std::function<Scheduler<match_op_info_t>::save_fn_sig_t> match_saver = 
-            [](match_op_info_t& op, const std::optional<std::string>& ret) -> void
-            {
-                if(ret.has_value())
-                    op.ret = ret.value();
-            };
+static  std::function<Scheduler<match_op_info_t>::save_fn_sig_t> match_saver = 
+    [](match_op_info_t& op, const std::optional<std::string>& ret) -> void
+    {
+        if(ret.has_value())
+            op.ret = ret.value();
+    };
 
-        REQUIRE_NOTHROW(Scheduler<match_op_info_t>( match_worker            ,
-                                                    match_saver             ,
-                                                    max_match_rqs           ,
-                                                    match_expire_mins       ,
-                                                    max_match_threads       ));
+TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Constructor]")
+{
+    SECTION("Index-oriented Scheduler instance")
+    {
+        SECTION("Index-oriented Scheduler instance with proper parameters")
+        {
+            REQUIRE_NOTHROW(Scheduler<index_op_info_t>( index_worker            ,
+                                                        index_saver             ,
+                                                        max_index_rqs           ,
+                                                        index_expire_mins       ,
+                                                        max_index_threads       ));
+        }
+
+        SECTION("Index-oriented Scheduler instance with wrong parameters")
+        {
+            SECTION("Zero expire mins")
+            {
+                REQUIRE_THROWS_AS(Scheduler<index_op_info_t>(   index_worker            ,
+                                                                index_saver             ,
+                                                                max_index_rqs           ,
+                                                                std::chrono::minutes{0} ,
+                                                                max_index_threads       ),
+                                                                std::invalid_argument   );
+            }
+
+            SECTION("Zero threads for non-null queue")
+            {
+                REQUIRE_THROWS_AS(Scheduler<index_op_info_t>(   index_worker            ,
+                                                                index_saver             ,
+                                                                max_index_rqs           ,
+                                                                index_expire_mins       ,
+                                                                0                       ),
+                                                                std::invalid_argument   );
+            }
+        }
+    }
+
+    SECTION("Match-oriented Scheduler instance")
+    {
+        SECTION("Match-oriented Scheduler instance with proper parameters")
+        {
+            REQUIRE_NOTHROW(Scheduler<match_op_info_t>( match_worker            ,
+                                                        match_saver             ,
+                                                        max_match_rqs           ,
+                                                        match_expire_mins       ,
+                                                        max_match_threads       ));
+        }
+
+        SECTION("Match-oriented Scheduler instance with wrong parameters")
+        {
+            SECTION("Zero expire mins")
+            {
+                REQUIRE_THROWS_AS(Scheduler<match_op_info_t>(   match_worker            ,
+                                                                match_saver             ,
+                                                                max_match_rqs           ,
+                                                                std::chrono::minutes{0} ,
+                                                                max_match_threads       ),
+                                                                std::invalid_argument   );
+            }
+
+            SECTION("Zero threads for non-null queue")
+            {
+                REQUIRE_THROWS_AS(Scheduler<match_op_info_t>(   match_worker            ,
+                                                                match_saver             ,
+                                                                max_match_rqs           ,
+                                                                match_expire_mins       ,
+                                                                0                       ),
+                                                                std::invalid_argument   );
+            }
+        }
     }
 }
