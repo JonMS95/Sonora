@@ -215,7 +215,11 @@ template <typename map_value_t>
 request_status_t Scheduler<map_value_t>::getJobStatus(const uint64_t job_id)
 {
     std::lock_guard<std::mutex> lock(mtx_);
-    return op_map_.at(job_id).status;
+    
+    if(op_map_.count(job_id))
+        return op_map_.at(job_id).status;
+
+    return request_status_t::OP_UNKNOWN;
 }
 
 template <typename map_value_t>
