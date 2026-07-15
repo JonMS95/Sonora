@@ -16,6 +16,7 @@
 static const std::filesystem::path test_data_dir_path = std::filesystem::path(TEST_DATA_DIR);
 static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
 static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
+static const std::filesystem::path samples_path = full_samples_dir_path / "sample_3s_16_khz.wav";
 
 static const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
 
@@ -24,68 +25,25 @@ static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_bas
 static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
 static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
 
-static const uint32_t downsmp_freq     = 8000   ;
-static const std::size_t fir_coefs     = 51     ;
-static const float frame_duration      = .01f   ;
-static const uint32_t feature_ratio    = 10     ;
-static const uint8_t window_size       = 3      ;
-static const uint8_t peak_number       = 3      ;
-
-const uint64_t max_index_rqs                    = 5;
-const std::chrono::minutes index_expire_mins    = std::chrono::minutes{10};
-const uint64_t max_index_threads                = 1;
-
-const uint64_t max_match_rqs                    = 10;
-const std::chrono::minutes match_expire_mins    = std::chrono::minutes{10};
-const uint64_t max_match_threads                = 10;
-
-typedef struct
-{
-    request_status_t status;
-    std::chrono::steady_clock::time_point expire_time;
-} index_op_info_t;
+const uint64_t max_rqs                  = 10;
+const std::chrono::minutes expire_mins  = std::chrono::minutes{10};
+const uint64_t max_threads              = 10;
 
 typedef struct
 {
     request_status_t status;
     std::chrono::steady_clock::time_point expire_time;
     std::string ret;
-} match_op_info_t;
+} op_info_t;
 
-static  AudioIndexer audio_indexer( downsmp_freq    ,
-                                    samples_db_path ,
-                                    fir_coefs       ,
-                                    frame_duration  ,
-                                    feature_ratio   ,
-                                    window_size     ,
-                                    peak_number     );
-
-static  std::function<Scheduler<index_op_info_t>::work_fn_sig_t> index_worker =
-            [](const std::string& file) -> std::optional<std::string>
-            {
-                audio_indexer.index(file);
-                return std::nullopt;
-            };
-
-static  std::function<Scheduler<index_op_info_t>::save_fn_sig_t> index_saver = 
-            [](index_op_info_t&, const std::optional<std::string>&) -> void {};
-
-static  AudioMatcher audio_matcher( downsmp_freq    ,
-                                    samples_db_path ,
-                                    fir_coefs       ,
-                                    frame_duration  ,
-                                    feature_ratio   ,
-                                    window_size     ,
-                                    peak_number     );
-
-static  std::function<Scheduler<match_op_info_t>::work_fn_sig_t> match_worker =
+static std::function<Scheduler<op_info_t>::work_fn_sig_t> fn_worker =
     [](const std::string& file) -> std::optional<std::string>
     {
-        return audio_matcher.match(file);
+        return ("dummy" + file);
     };
 
-static  std::function<Scheduler<match_op_info_t>::save_fn_sig_t> match_saver = 
-    [](match_op_info_t& op, const std::optional<std::string>& ret) -> void
+static std::function<Scheduler<op_info_t>::save_fn_sig_t> fn_saver = 
+    [](op_info_t& op, const std::optional<std::string>& ret) -> void
     {
         if(ret.has_value())
             op.ret = ret.value();
@@ -93,248 +51,220 @@ static  std::function<Scheduler<match_op_info_t>::save_fn_sig_t> match_saver =
 
 TEST_CASE("Scheduler: Constructor with custom parameters", "[Scheduler][Constructor]")
 {
-    SECTION("Index-oriented Scheduler instance")
+    SECTION("Scheduler instance with proper parameters")
     {
-        SECTION("Index-oriented Scheduler instance with proper parameters")
-        {
-            REQUIRE_NOTHROW(Scheduler<index_op_info_t>( index_worker            ,
-                                                        index_saver             ,
-                                                        max_index_rqs           ,
-                                                        index_expire_mins       ,
-                                                        max_index_threads       ));
-        }
-
-        SECTION("Index-oriented Scheduler instance with wrong parameters")
-        {
-            SECTION("Zero expire mins")
-            {
-                REQUIRE_THROWS_AS(Scheduler<index_op_info_t>(   index_worker            ,
-                                                                index_saver             ,
-                                                                max_index_rqs           ,
-                                                                std::chrono::minutes{0} ,
-                                                                max_index_threads       ),
-                                                                std::invalid_argument   );
-            }
-
-            SECTION("Zero threads for non-null queue")
-            {
-                REQUIRE_THROWS_AS(Scheduler<index_op_info_t>(   index_worker            ,
-                                                                index_saver             ,
-                                                                max_index_rqs           ,
-                                                                index_expire_mins       ,
-                                                                0                       ),
-                                                                std::invalid_argument   );
-            }
-        }
+        REQUIRE_NOTHROW(Scheduler<op_info_t>(   fn_worker   ,
+                                                fn_saver    ,
+                                                max_rqs     ,
+                                                expire_mins ,
+                                                max_threads ));
     }
 
-    SECTION("Match-oriented Scheduler instance")
+    SECTION("Zero expire mins")
     {
-        SECTION("Match-oriented Scheduler instance with proper parameters")
-        {
-            REQUIRE_NOTHROW(Scheduler<match_op_info_t>( match_worker            ,
-                                                        match_saver             ,
-                                                        max_match_rqs           ,
-                                                        match_expire_mins       ,
-                                                        max_match_threads       ));
-        }
+        REQUIRE_THROWS_AS(Scheduler<op_info_t>( fn_worker               ,
+                                                fn_saver                ,
+                                                max_rqs                 ,
+                                                std::chrono::minutes{0} ,
+                                                max_threads             ),
+                                                std::invalid_argument   );
+    }
 
-        SECTION("Match-oriented Scheduler instance with wrong parameters")
-        {
-            SECTION("Zero expire mins")
-            {
-                REQUIRE_THROWS_AS(Scheduler<match_op_info_t>(   match_worker            ,
-                                                                match_saver             ,
-                                                                max_match_rqs           ,
-                                                                std::chrono::minutes{0} ,
-                                                                max_match_threads       ),
-                                                                std::invalid_argument   );
-            }
-
-            SECTION("Zero threads for non-null queue")
-            {
-                REQUIRE_THROWS_AS(Scheduler<match_op_info_t>(   match_worker            ,
-                                                                match_saver             ,
-                                                                max_match_rqs           ,
-                                                                match_expire_mins       ,
-                                                                0                       ),
-                                                                std::invalid_argument   );
-            }
-        }
+    SECTION("Zero threads for non-null queue")
+    {
+        REQUIRE_THROWS_AS(Scheduler<op_info_t>( fn_worker   ,
+                                                fn_saver    ,
+                                                max_rqs     ,
+                                                expire_mins ,
+                                                0           ),
+                                                std::invalid_argument);
     }
 }
 
 TEST_CASE("Scheduler: run", "[Scheduler][run]")
 {
-    SECTION("Index-oriented scheduler")
+    SECTION("Execute run method once")
     {
-        SECTION("Execute run method once")
-        {
-            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
-                                                        index_saver             ,
-                                                        max_index_rqs           ,
-                                                        index_expire_mins       ,
-                                                        max_index_threads       );
-            REQUIRE_NOTHROW(index_scheduler.run());
-            REQUIRE(index_scheduler.isSchedulerRunning());
-        }
-
-        SECTION("Execute run method twice")
-        {
-            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
-                                                        index_saver             ,
-                                                        max_index_rqs           ,
-                                                        index_expire_mins       ,
-                                                        max_index_threads       );
-            REQUIRE_NOTHROW(index_scheduler.run());
-            REQUIRE(index_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(index_scheduler.run());
-            REQUIRE(index_scheduler.isSchedulerRunning());
-        }
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        REQUIRE_NOTHROW(scheduler.run());
+        REQUIRE(scheduler.isSchedulerRunning());
     }
 
-    SECTION("Match-oriented scheduler")
+    SECTION("Execute run method twice")
     {
-        SECTION("Execute run method once")
-        {
-            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
-                                                        match_saver             ,
-                                                        max_match_rqs           ,
-                                                        match_expire_mins       ,
-                                                        max_match_threads       );
-            REQUIRE_NOTHROW(match_scheduler.run());
-            REQUIRE(match_scheduler.isSchedulerRunning());
-        }
-
-        SECTION("Execute run method twice")
-        {
-            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
-                                                        match_saver             ,
-                                                        max_match_rqs           ,
-                                                        match_expire_mins       ,
-                                                        max_match_threads       );
-            REQUIRE_NOTHROW(match_scheduler.run());
-            REQUIRE(match_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(match_scheduler.run());
-            REQUIRE(match_scheduler.isSchedulerRunning());
-        }
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        REQUIRE_NOTHROW(scheduler.run());
+        REQUIRE(scheduler.isSchedulerRunning());
+        REQUIRE_NOTHROW(scheduler.run());
+        REQUIRE(scheduler.isSchedulerRunning());
     }
 }
 
 TEST_CASE("Scheduler: end", "[Scheduler][end]")
 {
-    SECTION("Index-oriented scheduler")
+    SECTION("Execute end method once")
     {
-        SECTION("Execute end method once")
-        {
-            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
-                                                        index_saver             ,
-                                                        max_index_rqs           ,
-                                                        index_expire_mins       ,
-                                                        max_index_threads       );
-            REQUIRE_NOTHROW(index_scheduler.run());
-            REQUIRE(index_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(index_scheduler.end());
-            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
-        }
-
-        SECTION("Execute end method twice")
-        {
-            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
-                                                        index_saver             ,
-                                                        max_index_rqs           ,
-                                                        index_expire_mins       ,
-                                                        max_index_threads       );
-            REQUIRE_NOTHROW(index_scheduler.run());
-            REQUIRE(index_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(index_scheduler.end());
-            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(index_scheduler.end());
-            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
-        }
-
-        SECTION("Execute end method with no preceeding run")
-        {
-            Scheduler<index_op_info_t> index_scheduler( index_worker            ,
-                                                        index_saver             ,
-                                                        max_index_rqs           ,
-                                                        index_expire_mins       ,
-                                                        max_index_threads       );
-            REQUIRE_NOTHROW(index_scheduler.end());
-            REQUIRE_FALSE(index_scheduler.isSchedulerRunning());
-        }
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();
+        scheduler.isSchedulerRunning();
+        REQUIRE_NOTHROW(scheduler.end());
+        REQUIRE_FALSE(scheduler.isSchedulerRunning());
     }
 
-    SECTION("Match-oriented scheduler")
+    SECTION("Execute end method twice")
     {
-        SECTION("Execute end method once")
-        {
-            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
-                                                        match_saver             ,
-                                                        max_match_rqs           ,
-                                                        match_expire_mins       ,
-                                                        max_match_threads       );
-            REQUIRE_NOTHROW(match_scheduler.run());
-            REQUIRE(match_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(match_scheduler.end());
-            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
-        }
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();
+        scheduler.isSchedulerRunning();
+        REQUIRE_NOTHROW(scheduler.end());
+        REQUIRE_FALSE(scheduler.isSchedulerRunning());
+        REQUIRE_NOTHROW(scheduler.end());
+        REQUIRE_FALSE(scheduler.isSchedulerRunning());
+    }
 
-        SECTION("Execute end method twice")
-        {
-            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
-                                                        match_saver             ,
-                                                        max_match_rqs           ,
-                                                        match_expire_mins       ,
-                                                        max_match_threads       );
-            REQUIRE_NOTHROW(match_scheduler.run());
-            REQUIRE(match_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(match_scheduler.end());
-            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
-            REQUIRE_NOTHROW(match_scheduler.end());
-            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
-        }
-
-        SECTION("Execute end method with no preceeding run")
-        {
-            Scheduler<match_op_info_t> match_scheduler( match_worker            ,
-                                                        match_saver             ,
-                                                        max_match_rqs           ,
-                                                        match_expire_mins       ,
-                                                        max_match_threads       );
-            REQUIRE_NOTHROW(match_scheduler.end());
-            REQUIRE_FALSE(match_scheduler.isSchedulerRunning());
-        }
+    SECTION("Execute end method with no preceeding run")
+    {
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        REQUIRE_NOTHROW(scheduler.end());
+        REQUIRE_FALSE(scheduler.isSchedulerRunning());
     }
 }
 
-// TEST_CASE("Scheduler: enqueueJob", "[Scheduler][enqueueJob]")
-// {
-//     SECTION("Index-oriented scheduler")
-//     {
-//         SECTION("Push to full / null queue")
-//         {
-//             Scheduler<index_op_info_t> index_scheduler( index_worker            ,
-//                                                         index_saver             ,
-//                                                         0                       ,
-//                                                         index_expire_mins       ,
-//                                                         0                       );
-//             REQUIRE_NOTHROW(index_scheduler.run());
-            
-//         }
-//     }
+TEST_CASE("Scheduler: enqueueJob", "[Scheduler][enqueueJob]")
+{
+    SECTION("Getproper job id")
+    {
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();
 
-//     SECTION("Match-oriented scheduler")
-//     {
-//         SECTION("Execute end method once")
-//         {
-//             Scheduler<match_op_info_t> match_scheduler( match_worker            ,
-//                                                         match_saver             ,
-//                                                         max_match_rqs           ,
-//                                                         match_expire_mins       ,
-//                                                         max_match_threads       );
-//             REQUIRE_NOTHROW(match_scheduler.run());
-//             REQUIRE_NOTHROW(match_scheduler.end());
-//         }
-//     }
-// }
+        REQUIRE(scheduler.enqueueJob(std::string(samples_path)) == 0);
+    }
+
+    SECTION("Null path")
+    {
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();     
+
+        REQUIRE_THROWS_AS(scheduler.enqueueJob(""), std::invalid_argument);
+    }
+
+    SECTION("File errors")
+    {
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();              
+
+        SECTION("Non-existing path")
+        {
+            static const std::string non_existing_path = test_data_dir_path / "samples" / "full_samples" / "non_existing";
+
+            REQUIRE_THROWS_AS(scheduler.enqueueJob(non_existing_path), std::invalid_argument);
+        }
+
+        SECTION("Path does not belong to a regular file")
+        {
+            REQUIRE_THROWS_AS(scheduler.enqueueJob(full_samples_dir_path), std::invalid_argument);
+        }
+    }
+
+    SECTION("Push to full / null queue")
+    {
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        0           ,
+                                        expire_mins ,
+                                        0           );
+        scheduler.run();
+
+        REQUIRE(scheduler.enqueueJob(std::string(samples_path)) == std::nullopt);
+    }
+}
+
+TEST_CASE("Scheduler: getJobStatus", "[Scheduler][getJobStatus]")
+{
+    SECTION("Unknown job")
+    {
+        Scheduler<op_info_t> scheduler( fn_worker   ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();
+
+        REQUIRE(scheduler.getJobStatus(0) == request_status_t::OP_UNKNOWN);
+    }
+
+    static std::function<Scheduler<op_info_t>::work_fn_sig_t> fn_sleep =
+    [](const std::string& file) -> std::optional<std::string>
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        return ("dummy" + file);
+    };
+
+    SECTION("Spot ongoing job")
+    {
+        Scheduler<op_info_t> scheduler( fn_sleep    ,
+                                        fn_saver    ,
+                                        max_rqs     ,
+                                        expire_mins ,
+                                        max_threads );
+        scheduler.run();
+
+        uint64_t job_id = scheduler.enqueueJob(std::string(samples_path)).value();
+
+        while(scheduler.getJobStatus(job_id) == request_status_t::OP_QUEUED)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        REQUIRE(scheduler.getJobStatus(job_id) == request_status_t::OP_ONGOING);
+    }
+
+    SECTION("Spot queued job")
+    {
+        Scheduler<op_info_t> scheduler( fn_sleep    ,
+                                        fn_saver    ,
+                                        2           ,
+                                        expire_mins ,
+                                        1           );
+        scheduler.run();
+
+        uint64_t first_job_id = scheduler.enqueueJob(std::string(samples_path)).value();
+
+        while(scheduler.getJobStatus(first_job_id) != request_status_t::OP_ONGOING)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        uint64_t job_id = scheduler.enqueueJob(std::string(samples_path)).value();
+
+        REQUIRE(scheduler.getJobStatus(job_id) == request_status_t::OP_QUEUED);
+    }
+}
