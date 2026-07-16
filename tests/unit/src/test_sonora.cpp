@@ -22,6 +22,8 @@ static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_bas
 static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
 static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
 
+static const std::filesystem::path samples_path = full_samples_dir_path / "sample_3s_16_khz.wav";
+
 static const uint32_t downsmp_freq     = 8000   ;
 static const std::size_t fir_coefs     = 51     ;
 static const float frame_duration      = .01f   ;
@@ -484,5 +486,316 @@ TEST_CASE("Sonora: Constructor with custom parameters", "[Sonora][Constructor]")
                                         0                   ),
                                         std::invalid_argument);
         }
+    }
+}
+
+TEST_CASE("Sonora: run", "[Sonora][run]")
+{
+    SECTION("Execute run method once")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        REQUIRE_NOTHROW(sonora.run());
+        REQUIRE(sonora.isIndexerRunning());
+        REQUIRE(sonora.isMatcherRunning());
+    }
+
+    SECTION("Execute run method twice")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        REQUIRE_NOTHROW(sonora.run());
+        REQUIRE(sonora.isIndexerRunning());
+        REQUIRE(sonora.isMatcherRunning());
+        REQUIRE_NOTHROW(sonora.run());
+        REQUIRE(sonora.isIndexerRunning());
+        REQUIRE(sonora.isMatcherRunning());
+    }
+}
+
+TEST_CASE("Sonora: end", "[Sonora][end]")
+{
+    SECTION("Execute end method once")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+        REQUIRE_NOTHROW(sonora.end());
+        REQUIRE_FALSE(sonora.isIndexerRunning());
+        REQUIRE_FALSE(sonora.isMatcherRunning());
+    }
+
+    SECTION("Execute end method once")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+        REQUIRE_NOTHROW(sonora.end());
+        REQUIRE_FALSE(sonora.isIndexerRunning());
+        REQUIRE_FALSE(sonora.isMatcherRunning());
+        REQUIRE_NOTHROW(sonora.end());
+        REQUIRE_FALSE(sonora.isIndexerRunning());
+        REQUIRE_FALSE(sonora.isMatcherRunning());
+    }
+
+    SECTION("Execute end method with no preceeding run")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        
+        REQUIRE_NOTHROW(sonora.end());
+        REQUIRE_FALSE(sonora.isIndexerRunning());
+        REQUIRE_FALSE(sonora.isMatcherRunning());
+    }
+}
+
+TEST_CASE("Sonora: index", "[Sonora][index]")
+{
+    SECTION("Get proper job id")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        REQUIRE(sonora.index(std::string(samples_path)) == 0);
+    }
+
+    SECTION("Null path")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        sonora.run();     
+
+        REQUIRE_THROWS_AS(sonora.index(""), std::invalid_argument);
+    }
+
+    SECTION("File errors")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();              
+
+        SECTION("Non-existing path")
+        {
+            static const std::string non_existing_path = test_data_dir_path / "samples" / "full_samples" / "non_existing";
+
+            REQUIRE_THROWS_AS(sonora.index(non_existing_path), std::invalid_argument);
+        }
+
+        SECTION("Path does not belong to a regular file")
+        {
+            REQUIRE_THROWS_AS(sonora.index(full_samples_dir_path), std::invalid_argument);
+        }
+    }
+
+    SECTION("Push to full / null queue")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        0                   ,
+                        index_expire_mins   ,
+                        0                   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        REQUIRE(sonora.index(std::string(samples_path)) == std::nullopt);
+    }
+}
+
+TEST_CASE("Sonora: match", "[Sonora][match]")
+{
+    SECTION("Get proper job id")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        REQUIRE(sonora.match(std::string(samples_path)) == 0);
+    }
+
+    SECTION("Null path")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        sonora.run();     
+
+        REQUIRE_THROWS_AS(sonora.match(""), std::invalid_argument);
+    }
+
+    SECTION("File errors")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();              
+
+        SECTION("Non-existing path")
+        {
+            static const std::string non_existing_path = test_data_dir_path / "samples" / "full_samples" / "non_existing";
+
+            REQUIRE_THROWS_AS(sonora.match(non_existing_path), std::invalid_argument);
+        }
+
+        SECTION("Path does not belong to a regular file")
+        {
+            REQUIRE_THROWS_AS(sonora.match(full_samples_dir_path), std::invalid_argument);
+        }
+    }
+
+    SECTION("Push to full / null queue")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        samples_db_path     ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        0                   ,  
+                        match_expire_mins   ,
+                        0                   );
+
+        sonora.run();
+
+        REQUIRE(sonora.match(std::string(samples_path)) == std::nullopt);
     }
 }
