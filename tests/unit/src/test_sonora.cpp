@@ -4,9 +4,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-// #include <functional>
 #include <chrono>
-// #include <optional>
+#include <thread>
+#include <optional>
 #include "test_db_helper.hpp"
 #include "rq_status_enum.hpp"
 #include "sonora.hpp"
@@ -613,7 +613,7 @@ TEST_CASE("Sonora: index", "[Sonora][index]")
     SECTION("Get proper job id")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -629,12 +629,14 @@ TEST_CASE("Sonora: index", "[Sonora][index]")
         sonora.run();
 
         REQUIRE(sonora.index(std::string(samples_path)) == 0);
+
+        std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("Null path")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -649,12 +651,14 @@ TEST_CASE("Sonora: index", "[Sonora][index]")
         sonora.run();     
 
         REQUIRE_THROWS_AS(sonora.index(""), std::invalid_argument);
+
+        std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("File errors")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -680,12 +684,14 @@ TEST_CASE("Sonora: index", "[Sonora][index]")
         {
             REQUIRE_THROWS_AS(sonora.index(full_samples_dir_path), std::invalid_argument);
         }
+
+        std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("Push to full / null queue")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -701,6 +707,8 @@ TEST_CASE("Sonora: index", "[Sonora][index]")
         sonora.run();
 
         REQUIRE(sonora.index(std::string(samples_path)) == std::nullopt);
+
+        std::filesystem::remove(dummy_db_path);
     }
 }
 
@@ -709,7 +717,7 @@ TEST_CASE("Sonora: match", "[Sonora][match]")
     SECTION("Get proper job id")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -725,12 +733,14 @@ TEST_CASE("Sonora: match", "[Sonora][match]")
         sonora.run();
 
         REQUIRE(sonora.match(std::string(samples_path)) == 0);
+
+        std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("Null path")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -745,12 +755,14 @@ TEST_CASE("Sonora: match", "[Sonora][match]")
         sonora.run();     
 
         REQUIRE_THROWS_AS(sonora.match(""), std::invalid_argument);
+    
+        std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("File errors")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -776,12 +788,14 @@ TEST_CASE("Sonora: match", "[Sonora][match]")
         {
             REQUIRE_THROWS_AS(sonora.match(full_samples_dir_path), std::invalid_argument);
         }
+
+        std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("Push to full / null queue")
     {
         Sonora sonora(  downsmp_freq        ,
-                        samples_db_path     ,
+                        dummy_db_path       ,
                         fir_coefs           ,
                         frame_duration      ,
                         feature_ratio       ,
@@ -797,5 +811,175 @@ TEST_CASE("Sonora: match", "[Sonora][match]")
         sonora.run();
 
         REQUIRE(sonora.match(std::string(samples_path)) == std::nullopt);
+    
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Sonora: getIndexStatus", "[Sonora][getIndexStatus]")
+{
+    SECTION("Unknown job")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        REQUIRE(sonora.getIndexStatus(0) == request_status_t::OP_UNKNOWN);
+
+        std::filesystem::remove(dummy_db_path);
+    }
+
+    SECTION("Spot ongoing job")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        
+        sonora.run();
+
+        uint64_t job_id = sonora.index(std::string(samples_path)).value();
+
+        while(sonora.getIndexStatus(job_id) == request_status_t::OP_QUEUED)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        REQUIRE(sonora.getIndexStatus(job_id) == request_status_t::OP_ONGOING);
+    
+        std::filesystem::remove(dummy_db_path);
+    }
+
+    SECTION("Spot queued job")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        2                   ,
+                        index_expire_mins   ,
+                        1                   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        
+        sonora.run();
+
+        uint64_t first_job_id = sonora.index(std::string(samples_path)).value();
+
+        while(sonora.getIndexStatus(first_job_id) != request_status_t::OP_ONGOING)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        uint64_t job_id = sonora.index(std::string(samples_path)).value();
+
+        REQUIRE(sonora.getIndexStatus(job_id) == request_status_t::OP_QUEUED);
+    
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Sonora: getMatchStatus", "[Sonora][getMatchStatus]")
+{
+    SECTION("Unknown job")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        REQUIRE(sonora.getMatchStatus(0) == request_status_t::OP_UNKNOWN);
+
+        std::filesystem::remove(dummy_db_path);
+    }
+
+    SECTION("Spot ongoing job")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        
+        sonora.run();
+
+        uint64_t job_id = sonora.match(std::string(samples_path)).value();
+
+        while(sonora.getMatchStatus(job_id) == request_status_t::OP_QUEUED)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        REQUIRE(sonora.getMatchStatus(job_id) == request_status_t::OP_ONGOING);
+
+        std::filesystem::remove(dummy_db_path);
+    }
+
+    SECTION("Spot queued job")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        2                   ,  
+                        match_expire_mins   ,
+                        1                   );
+        
+        sonora.run();
+
+        uint64_t first_job_id = sonora.match(std::string(samples_path)).value();
+
+        while(sonora.getMatchStatus(first_job_id) != request_status_t::OP_ONGOING)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        uint64_t job_id = sonora.match(std::string(samples_path)).value();
+
+        REQUIRE(sonora.getMatchStatus(job_id) == request_status_t::OP_QUEUED);
+
+        std::filesystem::remove(dummy_db_path);
     }
 }
