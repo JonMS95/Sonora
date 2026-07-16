@@ -45,6 +45,7 @@ struct Sonora::Impl
             const uint8_t peak_number                   ,
             const uint64_t max_index_rqs                ,
             const std::chrono::minutes index_expire_mins,
+            const uint64_t max_index_threads            ,
             const uint64_t max_match_rqs                ,
             const std::chrono::minutes match_expire_mins,
             const uint64_t max_match_threads            );
@@ -59,6 +60,7 @@ Sonora::Impl::Impl( const uint32_t downsmp_freq                 ,
                     const uint8_t peak_number                   ,
                     const uint64_t max_index_rqs                ,
                     const std::chrono::minutes index_expire_mins,
+                    const uint64_t max_index_threads            ,
                     const uint64_t max_match_rqs                ,
                     const std::chrono::minutes match_expire_mins,
                     const uint64_t max_match_threads            ):
@@ -87,7 +89,7 @@ Sonora::Impl::Impl( const uint32_t downsmp_freq                 ,
                         index_saver             ,
                         max_index_rqs           ,
                         index_expire_mins       ,
-                        1                       ),
+                        max_index_threads       ),
     match_worker([this](const std::string& file) -> std::string
     {
         return audio_matcher.match(file);
@@ -113,6 +115,7 @@ Sonora::Sonora( const uint32_t downsmp_freq                 ,
                 const uint8_t peak_number                   ,
                 const uint64_t max_index_rqs                ,
                 const std::chrono::minutes index_expire_mins,
+                const uint64_t max_index_threads            ,
                 const uint64_t max_match_rqs                ,
                 const std::chrono::minutes match_expire_mins,
                 const uint64_t max_match_threads            ):
@@ -125,6 +128,7 @@ Sonora::Sonora( const uint32_t downsmp_freq                 ,
                                             peak_number         ,
                                             max_index_rqs       ,
                                             index_expire_mins   ,
+                                            max_index_threads   , 
                                             max_match_rqs       ,
                                             match_expire_mins   ,
                                             max_match_threads   ))

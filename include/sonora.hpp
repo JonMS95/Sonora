@@ -26,6 +26,7 @@ public:
                     const uint8_t peak_number                       = 3                         ,
                     const uint64_t max_index_rqs                    = UINT64_MAX                ,
                     const std::chrono::minutes index_expire_mins    = std::chrono::minutes(10)  ,
+                    const uint64_t max_index_threads                = 1                         ,
                     const uint64_t max_match_rqs                    = UINT64_MAX                ,
                     const std::chrono::minutes match_expire_mins    = std::chrono::minutes(10)  ,
                     const uint64_t max_match_threads                = 16                        );
