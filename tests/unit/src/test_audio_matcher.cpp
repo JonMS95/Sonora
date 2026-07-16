@@ -65,7 +65,7 @@ TEST_CASE("Audio Matcher: Constructor with custom parameters", "[Audio Matcher][
                                             std::invalid_argument);
         }
 
-        SECTION("Database path")
+        SECTION("Database related")
         {
             SECTION("No path to database was provided")
             {
