@@ -114,7 +114,6 @@ TEST_CASE("Scheduler: end", "[Scheduler][end]")
                                         expire_mins ,
                                         max_threads );
         scheduler.run();
-        scheduler.isSchedulerRunning();
         REQUIRE_NOTHROW(scheduler.end());
         REQUIRE_FALSE(scheduler.isSchedulerRunning());
     }
@@ -127,7 +126,6 @@ TEST_CASE("Scheduler: end", "[Scheduler][end]")
                                         expire_mins ,
                                         max_threads );
         scheduler.run();
-        scheduler.isSchedulerRunning();
         REQUIRE_NOTHROW(scheduler.end());
         REQUIRE_FALSE(scheduler.isSchedulerRunning());
         REQUIRE_NOTHROW(scheduler.end());
@@ -148,7 +146,7 @@ TEST_CASE("Scheduler: end", "[Scheduler][end]")
 
 TEST_CASE("Scheduler: enqueueJob", "[Scheduler][enqueueJob]")
 {
-    SECTION("Getproper job id")
+    SECTION("Get proper job id")
     {
         Scheduler<op_info_t> scheduler( fn_worker   ,
                                         fn_saver    ,
