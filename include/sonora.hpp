@@ -13,7 +13,7 @@
 class Sonora
 {
 private:
-    class Impl;
+    struct Impl;
     std::unique_ptr<Impl> impl_;
 
 public:
