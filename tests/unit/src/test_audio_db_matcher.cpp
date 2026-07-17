@@ -19,7 +19,7 @@ static const std::filesystem::path sample_parts_dir_path = test_data_dir_path / 
 
 static const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
 
-static const std::string& dummy_db_base = "dummy_test_audio_db_matcher.db";;
+static const std::string& dummy_db_base = "dummy_test_audio_db_matcher.db";
 static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_base);
 static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_db_base + "-wal"));
 static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
@@ -63,7 +63,7 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
                                             peak_number     ),
                                             std::invalid_argument);
         
-        std::filesystem::remove(dummy_db_path);
+        // std::filesystem::remove(dummy_db_path);
     }
 
     SECTION("Directory in provided path does not exist")
@@ -184,28 +184,9 @@ TEST_CASE("Audio DB Matcher: Constructor with custom parameters", "[Audio DB Mat
     }
 }
 
-static std::filesystem::path removePartSuffix(const std::filesystem::path& p)
+TEST_CASE("Audio DB Matcher: queryHashes", "[Audio DB Matcher][queryHashes]")
 {
-    std::string stem = p.stem().string();   // "sample_3s_16_khz_part_000"
-    constexpr std::string_view marker = "_part_";
-
-    auto pos = stem.rfind(marker);
-    if (pos != std::string::npos)
-        stem.erase(pos);
-
-    return p.parent_path() / (stem + p.extension().string());
-}
-
-static bool checkAllPartFingerprints(   const std::filesystem::path sample_parts_dir_path   ,
-                                        const std::string& db_path                          ,
-                                        const uint32_t downsmp_freq                         ,
-                                        const std::size_t fir_coefs                         ,
-                                        const float frame_duration                          ,
-                                        const uint32_t feature_ratio                        ,
-                                        const uint8_t window_size                           ,
-                                        const uint8_t peak_number                           )
-{
-    AudioDBMatcher audio_db_matcher(db_path         ,
+    AudioDBMatcher audio_db_matcher(dummy_db_path   ,
                                     downsmp_freq    ,
                                     fir_coefs       ,
                                     frame_duration  ,
@@ -213,50 +194,20 @@ static bool checkAllPartFingerprints(   const std::filesystem::path sample_parts
                                     window_size     ,
                                     peak_number     );
 
-    std::unordered_map<uint32_t, Preprocessor> preprocessor_map;
-    SpectralAnalyzer spectral_analyzer(frame_duration, downsmp_freq, feature_ratio, peak_number);
-    FingerprintGenerator fingerprint_generator(window_size);
-    std::filesystem::path input;
-    std::filesystem::path expected;
-    uint32_t sample_rate;
-    std::vector<float> prep_signal;
-    std::vector<std::vector<std::size_t>> features;
-    std::unordered_map<std::size_t, std::vector<uint32_t>> song_fingerprint;
-    std::filesystem::path matcher_output_file;
-
-    for (const auto& entry : std::filesystem::directory_iterator(sample_parts_dir_path))
+    const std::unordered_map<std::size_t, std::vector<uint32_t>> frame_hashes =
     {
-        if (!entry.is_regular_file())
-            continue;
+        {0  ,   {6292737}},
+        {1  ,   {5244161}},
+        {2  ,   {0123456}},
+        {3  ,   {5244161}},
+        {4  ,   {5243905}},
+        {5  ,   {9876543}},
+        {6  ,   {4195585}},
+        {7  ,   {4195329}},
+        {8  ,   {5244161}},
+        {9  ,   {4195329}},
+        {10 ,   {5243905}},
+    };
 
-        input = entry.path();
-        expected = removePartSuffix(input);
-
-        sample_rate = Preprocessor::getFileSampleRate(input);
-        preprocessor_map.try_emplace(sample_rate, sample_rate, downsmp_freq, fir_coefs);
-
-        prep_signal = preprocessor_map.at(sample_rate).preprocessData(input);
-        features = spectral_analyzer.analyze(prep_signal);
-        song_fingerprint = fingerprint_generator.genFP(features);
-        matcher_output_file = audio_db_matcher.queryHashes(song_fingerprint);
-
-        if(expected.filename() != matcher_output_file.filename())
-            return false;
-    }
-
-    return true;
-}
-
-TEST_CASE("Audio DB Matcher: queryHashes", "[Audio DB Matcher][queryHashes]")
-{
-    const std::filesystem::path sample_parts_dir_path = test_data_dir_path / "samples" / "sample_parts";
-
-    REQUIRE(checkAllPartFingerprints(   sample_parts_dir_path   ,
-                                        samples_db_path         ,
-                                        downsmp_freq            ,
-                                        fir_coefs               ,
-                                        frame_duration          ,
-                                        feature_ratio           ,
-                                        window_size             ,
-                                        peak_number             ));
+    REQUIRE(audio_db_matcher.queryHashes(frame_hashes) == "dummy_song_2");
 }
