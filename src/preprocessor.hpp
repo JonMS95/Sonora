@@ -6,12 +6,13 @@
 #include <cstdint>
 #include <sndfile.h>
 #include <mutex>
+#include <optional>
 #include "fir_filter.hpp"
 
 class Preprocessor
 {
 private:
-    FIRFilter fir_filter_;
+    std::optional<FIRFilter> fir_filter_;
     const uint32_t downsmp_freq_;
     SF_INFO sf_info_;
     std::mutex prep_mtx_;

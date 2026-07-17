@@ -4,9 +4,13 @@
 
 SpectralAnalyzer::SpectralAnalyzer( const float frame_duration          ,
                                     const uint32_t sampling_frequency   ,
-                                    const uint32_t feature_ratio        ):
-    samples_in_frame_(frame_duration * sampling_frequency),
-    fft_proc_(FFTProcessor(frame_duration, sampling_frequency, feature_ratio))
+                                    const uint32_t feature_ratio        ,
+                                    const uint8_t peak_number           ):
+    samples_in_frame_(frame_duration * sampling_frequency)  ,
+    fft_proc_(FFTProcessor( frame_duration                  ,
+                            sampling_frequency              ,
+                            feature_ratio                   ,
+                            peak_number                     ))
 {}
 
 std::vector<std::vector<float>> SpectralAnalyzer::_split(const std::vector<float>& signal) const

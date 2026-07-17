@@ -16,27 +16,35 @@ uint32_t Preprocessor::getFileSampleRate(const std::string& file_path)
     return sf_info.samplerate;
 }
 
-static float calcFIRFiterCutoff(const uint32_t smp_rate, const uint32_t downsmp_freq)
+static std::optional<FIRFilter> initFIRFilter(const uint32_t smp_rate, const uint32_t downsmp_freq, const std::size_t fir_coefs)
 {
-    return (0.5 * static_cast<float>(downsmp_freq) / smp_rate);
-}
+    std::optional<FIRFilter> ret = std::nullopt;
 
-static float calcFIRFiterCutoff(const uint32_t downsmp_freq, const std::string& file_path)
-{
-    return (0.5 * static_cast<float>(downsmp_freq) / Preprocessor::getFileSampleRate(file_path));
+    if(downsmp_freq == 0)
+        throw std::invalid_argument("Resampling rate cannot be zero");
+
+    if(smp_rate == 0)
+        throw std::invalid_argument("Sampling rate cannot be zero");
+    
+    const float cutoff = 0.5 * static_cast<float>(downsmp_freq) / smp_rate;
+
+    if(cutoff > .0f && cutoff < .5f)
+        ret.emplace(FIRFilter(cutoff, fir_coefs));
+    
+    return ret;
 }
 
 Preprocessor::Preprocessor( const std::string& file_path,
                             const uint32_t downsmp_freq ,
                             const std::size_t fir_coefs ):
-    fir_filter_(FIRFilter(calcFIRFiterCutoff(downsmp_freq, file_path), fir_coefs)),
+    fir_filter_(initFIRFilter(Preprocessor::getFileSampleRate(file_path), downsmp_freq, fir_coefs)),
     downsmp_freq_(downsmp_freq)
 {}
 
 Preprocessor::Preprocessor( const uint32_t smp_rate     ,
                             const uint32_t downsmp_freq ,
                             const std::size_t fir_coefs ):
-    fir_filter_(FIRFilter(calcFIRFiterCutoff(smp_rate, downsmp_freq), fir_coefs)),
+    fir_filter_(initFIRFilter(smp_rate, downsmp_freq, fir_coefs)),
     downsmp_freq_(downsmp_freq)
 {}
 
@@ -87,7 +95,10 @@ std::vector<float> Preprocessor::_mono(const std::vector<float>& signal)
 
 std::vector<float> Preprocessor::_filter(const std::vector<float>& signal) const
 {
-    return fir_filter_.applyFIR(signal);
+    if(fir_filter_ == std::nullopt)
+        return fir_filter_->applyFIR(signal);
+
+    return signal;
 }
 
 std::vector<float> Preprocessor::_resample(const std::vector<float>& signal)
@@ -144,10 +155,15 @@ std::vector<float> Preprocessor::preprocessData(const std::string& input_path, c
     
     sf_info_ = {};
 
-    std::vector<float> raw      = _read(input_path);
-    std::vector<float> mono     = _mono(raw);
-    std::vector<float> filtered = _filter(mono);
-    std::vector<float> ret      = _resample(filtered);
+    std::vector<float> ret;
+    ret = _read(input_path);
+    ret = _mono(ret);
+
+    if(static_cast<uint32_t>(sf_info_.samplerate) > downsmp_freq_)
+        ret = _filter(ret);
+
+    if(static_cast<uint32_t>(sf_info_.samplerate) != downsmp_freq_)
+        ret = _resample(ret);
 
     if(!output_path.empty())
         _write(ret, output_path);

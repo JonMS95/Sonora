@@ -1,8 +1,12 @@
+#include <stdexcept>
 #include "fingerprint_generator.hpp"
 
-FingerprintGenerator::FingerprintGenerator(const uint8_t window_size, const uint8_t peak_number) :
-    win_size_(window_size), peak_num_(peak_number) 
-{}
+FingerprintGenerator::FingerprintGenerator(const uint8_t window_size) :
+    win_size_(window_size) 
+{
+    if(win_size_ == 0)
+        throw std::invalid_argument("Window size cannot be zero");
+}
 
 uint32_t FingerprintGenerator::_hash(   const std::size_t peak_a,
                                         const std::size_t peak_b,
@@ -24,9 +28,11 @@ std::vector<uint32_t> FingerprintGenerator::_genFramePairHashes(const std::vecto
     std::vector<uint32_t> ret;
     const std::vector<std::size_t>& frame_a = features[idx_a];
     const std::vector<std::size_t>& frame_b = features[idx_b];
+    const std::size_t a_feat_size = frame_a.size();
+    const std::size_t b_feat_size = frame_b.size();
 
-    for(std::size_t a_feat_idx = 0; a_feat_idx < peak_num_; a_feat_idx++)
-        for(std::size_t b_feat_idx = 0; b_feat_idx < peak_num_; b_feat_idx++)
+    for(std::size_t a_feat_idx = 0; a_feat_idx < a_feat_size; a_feat_idx++)
+        for(std::size_t b_feat_idx = 0; b_feat_idx < b_feat_size; b_feat_idx++)
             ret.emplace_back(_hash(frame_a[a_feat_idx], frame_b[b_feat_idx], idx_a, idx_b));
 
     return ret;
@@ -36,6 +42,7 @@ std::unordered_map<std::size_t, std::vector<uint32_t>> FingerprintGenerator::gen
 {
     std::unordered_map<std::size_t, std::vector<uint32_t>> ret;
     const std::size_t feat_size = features.size();
+    std::vector<uint32_t> hashes;
 
     for(std::size_t f_idx = 0; f_idx < feat_size; f_idx++)
     {
@@ -47,7 +54,9 @@ std::unordered_map<std::size_t, std::vector<uint32_t>> FingerprintGenerator::gen
             if(features[n_idx].empty())
                 continue;
 
-            ret[f_idx] = _genFramePairHashes(features, f_idx, n_idx);
+            hashes = _genFramePairHashes(features, f_idx, n_idx);
+
+            ret[f_idx].insert(ret[f_idx].end(), hashes.begin(), hashes.end());
         }
     }
 

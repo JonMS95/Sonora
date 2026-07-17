@@ -22,7 +22,8 @@ private:
 public:
     explicit SpectralAnalyzer(  const float frame_duration          ,
                                 const uint32_t sampling_frequency   ,
-                                const uint32_t feature_ratio        );
+                                const uint32_t feature_ratio        ,
+                                const uint8_t peak_number           );
 
     std::vector<std::vector<std::size_t>> analyze(std::vector<float>& signal);
 };

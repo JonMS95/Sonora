@@ -1,18 +1,29 @@
 #include <filesystem>
 #include "audio_db_base.hpp"
 
-AudioDBBase::AudioDBBase(const std::string& db_path): db_(nullptr)
+AudioDBBase::AudioDBBase(const std::string& db_path, const bool exact_path): db_(nullptr)
 {
+    if(db_path.size() == 0)
+        throw std::invalid_argument("No path to database was provided");
+
     // Check whether the path to the target database exists.
     std::filesystem::path fs_db_path(db_path);
 
-    if(fs_db_path.has_parent_path())
+    if(exact_path)
     {
-        if(!std::filesystem::exists(fs_db_path.parent_path()))
-            throw std::runtime_error("Database directory does not exist: " + fs_db_path.parent_path().string());
-        
-        if(!std::filesystem::is_directory(fs_db_path.parent_path()))
-            throw std::runtime_error("Path to database is not a directory");
+        if(!std::filesystem::exists(fs_db_path))
+            throw std::invalid_argument("Provided path does not belong to a valid database (exact match required)");
+    }
+    else
+    {
+        if(fs_db_path.has_parent_path())
+        {
+            if(!std::filesystem::exists(fs_db_path.parent_path()))
+                throw std::invalid_argument("Database directory does not exist: " + fs_db_path.parent_path().string());
+            
+            if(!std::filesystem::is_directory(fs_db_path.parent_path()))
+                throw std::invalid_argument("Path to database is not a directory");
+        }
     }
 
     int ret = sqlite3_open(db_path.c_str(), &db_);
@@ -90,14 +101,14 @@ void AudioDBBase::_checkParametersTable(const uint32_t downsmp_freq ,
             return std::string(value_name + ": got: " + std::to_string(provided_value) + ", expected: " + std::to_string(db_value) + " (" + ((provided_value == db_value) ? "equal" : "differ") + ")");
         };
 
-        const std::string re_str =  make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +  "\r\n" + 
-                                    make_comp_substr("Number of FIR filter coefficients",   fir_coefs,      db_fir_coefs) +     "\r\n" + 
-                                    make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +  "\r\n" + 
-                                    make_comp_substr("Feature ratio",                       feature_ratio,  db_feature_ratio) + "\r\n" + 
-                                    make_comp_substr("Window size",                         window_size,    db_window_size) +   "\r\n" + 
+        const std::string re_str =  make_comp_substr("Downsampling frequency",              downsmp_freq,   db_downsmp_freq) +      "\r\n" + 
+                                    make_comp_substr("Number of FIR filter coefficients",   fir_coefs,      db_fir_coefs) +         "\r\n" + 
+                                    make_comp_substr("Frame duration",                      frame_duration, db_frame_duration) +    "\r\n" + 
+                                    make_comp_substr("Feature ratio",                       feature_ratio,  db_feature_ratio) +     "\r\n" + 
+                                    make_comp_substr("Window size",                         window_size,    db_window_size) +       "\r\n" + 
                                     make_comp_substr("Number of peaks",                     peak_number,    db_peak_number);
 
-        throw std::runtime_error(re_str);
+        throw std::invalid_argument(re_str);
     }
 }
 

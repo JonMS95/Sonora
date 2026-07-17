@@ -9,7 +9,7 @@ AudioDBIndexer::AudioDBIndexer( const std::string& db_path  ,
                                 const uint32_t feature_ratio,
                                 const uint8_t window_size   ,
                                 const uint8_t peak_number   ):
-    AudioDBBase(db_path)
+    AudioDBBase(db_path, false)
 {
     AudioDBBase::_enableWAL();
     _manageParametersTable( downsmp_freq    ,
@@ -202,6 +202,9 @@ void AudioDBIndexer::_deleteFingerprints(const uint32_t song_id) const
 
 void AudioDBIndexer::insertFingerprints(const std::string& song_name, const std::unordered_map<std::size_t, std::vector<uint32_t>>& frame_hashes) const
 {
+    if(song_name.size() == 0)
+        throw std::invalid_argument("Song name cannot be null");
+
     const std::string& sql = "INSERT INTO fingerprints(hash, song_id, frame_idx) VALUES (?, ?, ?);";
 
     sqlite3_stmt* raw_stmt = nullptr;

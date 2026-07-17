@@ -121,9 +121,11 @@ int main(int argc, char** argv)
         while(sonora.hasPendingMatchOps() || sonora.hasOngoingMatchOps())
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        if(sonora.getMatchStatus(job_id.value()) != request_status_t::OP_OK)
+        request_status_t status = sonora.getMatchStatus(job_id.value());
+
+        if(status != request_status_t::OP_OK)
         {
-            std::cout << "Match op status did not go as expected, stopping procedure now..." << std::endl;
+            std::cout << "Match op status did not go as expected (" << static_cast<int>(status) << "), stopping procedure now..." << std::endl;
             return -3;
         }
 
