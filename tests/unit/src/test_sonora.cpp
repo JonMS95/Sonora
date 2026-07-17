@@ -14,6 +14,7 @@
 static const std::filesystem::path test_data_dir_path = std::filesystem::path(TEST_DATA_DIR);
 static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
 static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
+static const std::filesystem::path sample_parts_dir_path = test_data_dir_path / "samples" / "sample_parts";
 
 static const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
 
@@ -23,6 +24,7 @@ static const std::string& dummy_db_wal_path = std::string(db_dir_path / (dummy_d
 static const std::string& dummy_db_shm_path = std::string(db_dir_path / (dummy_db_base + "-shm"));
 
 static const std::filesystem::path samples_path = full_samples_dir_path / "sample_3s_16_khz.wav";
+static const std::filesystem::path samples_part_path = sample_parts_dir_path / "sample_3s_16_khz_part_005.wav";
 
 static const uint32_t downsmp_freq     = 8000   ;
 static const std::size_t fir_coefs     = 51     ;
@@ -979,6 +981,258 @@ TEST_CASE("Sonora: getMatchStatus", "[Sonora][getMatchStatus]")
         uint64_t job_id = sonora.match(std::string(samples_path)).value();
 
         REQUIRE(sonora.getMatchStatus(job_id) == request_status_t::OP_QUEUED);
+
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Sonora: hasPendingIndexOps", "[Sonora][hasPendingIndexOps]")
+{
+    SECTION("Has no pending jobs")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        uint64_t job_id = sonora.index(std::string(samples_path)).value();
+
+        while(  (sonora.getIndexStatus(job_id) == request_status_t::OP_UNKNOWN  ) ||
+                (sonora.getIndexStatus(job_id) == request_status_t::OP_QUEUED   ))
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        REQUIRE_FALSE(sonora.hasPendingIndexOps());
+
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Sonora: hasPendingMatchOps", "[Sonora][hasPendingMatchOps]")
+{
+    SECTION("Has no pending jobs")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        sonora.run();
+
+        uint64_t job_id = sonora.match(std::string(samples_path)).value();
+
+        while(  (sonora.getMatchStatus(job_id) == request_status_t::OP_UNKNOWN  ) ||
+                (sonora.getMatchStatus(job_id) == request_status_t::OP_QUEUED   ))
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        REQUIRE_FALSE(sonora.hasPendingMatchOps());
+
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Scheduler: hasOngoingIndexOps", "[Scheduler][hasOngoingIndexOps]")
+{
+    SECTION("Has ongoing jobs")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        
+        sonora.run();
+
+        uint64_t job_id = sonora.index(std::string(samples_path)).value();
+
+        while(  (sonora.getIndexStatus(job_id) == request_status_t::OP_UNKNOWN  ) ||
+                (sonora.getIndexStatus(job_id) == request_status_t::OP_QUEUED   ) ||
+                (sonora.getIndexStatus(job_id) == request_status_t::OP_ONGOING  ))
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        
+        REQUIRE_FALSE(sonora.hasOngoingIndexOps());
+    
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Scheduler: hasOngoingMatchOps", "[Scheduler][hasOngoingMatchOps]")
+{
+    SECTION("Has ongoing jobs")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+        
+        sonora.run();
+
+        uint64_t job_id = sonora.match(std::string(samples_path)).value();
+
+        while(  (sonora.getMatchStatus(job_id) == request_status_t::OP_UNKNOWN  ) ||
+                (sonora.getMatchStatus(job_id) == request_status_t::OP_QUEUED   ) ||
+                (sonora.getMatchStatus(job_id) == request_status_t::OP_ONGOING  ))
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        
+        REQUIRE_FALSE(sonora.hasOngoingMatchOps());
+
+        std::filesystem::remove(dummy_db_path);
+    }
+}
+
+TEST_CASE("Sonora: isIndexerRunning", "[Sonora][isIndexerRunning]")
+{
+    Sonora sonora(  downsmp_freq        ,
+                    dummy_db_path       ,
+                    fir_coefs           ,
+                    frame_duration      ,
+                    feature_ratio       ,
+                    window_size         ,
+                    peak_number         ,
+                    max_index_rqs       ,
+                    index_expire_mins   ,
+                    max_index_threads   ,
+                    max_match_rqs       ,  
+                    match_expire_mins   ,
+                    max_match_threads   );
+
+    SECTION("Is running after run is called")
+    {
+        sonora.run();
+
+        REQUIRE(sonora.isIndexerRunning());
+    }
+
+    SECTION("Is not running if run is not called")
+    {
+        REQUIRE_FALSE(sonora.isIndexerRunning());
+    }
+
+    SECTION("Is not running after end is called")
+    {
+        sonora.run();
+        sonora.end();
+
+        REQUIRE_FALSE(sonora.isIndexerRunning());
+    }
+
+    std::filesystem::remove(dummy_db_path);
+}
+
+TEST_CASE("Sonora: isMatcherRunning", "[Sonora][isMatcherRunning]")
+{
+    Sonora sonora(  downsmp_freq        ,
+                    dummy_db_path       ,
+                    fir_coefs           ,
+                    frame_duration      ,
+                    feature_ratio       ,
+                    window_size         ,
+                    peak_number         ,
+                    max_index_rqs       ,
+                    index_expire_mins   ,
+                    max_index_threads   ,
+                    max_match_rqs       ,  
+                    match_expire_mins   ,
+                    max_match_threads   );
+
+    SECTION("Is running after run is called")
+    {
+        sonora.run();
+
+        REQUIRE(sonora.isMatcherRunning());
+    }
+
+    SECTION("Is not running if run is not called")
+    {
+        REQUIRE_FALSE(sonora.isMatcherRunning());
+    }
+
+    SECTION("Is not running after end is called")
+    {
+        sonora.run();
+        sonora.end();
+
+        REQUIRE_FALSE(sonora.isMatcherRunning());
+    }
+
+    std::filesystem::remove(dummy_db_path);
+}
+
+TEST_CASE("Sonora: getMatchResult", "[Sonora][getMatchResult]")
+{
+    SECTION("Do the whole job then get the result")
+    {
+        Sonora sonora(  downsmp_freq        ,
+                        dummy_db_path       ,
+                        fir_coefs           ,
+                        frame_duration      ,
+                        feature_ratio       ,
+                        window_size         ,
+                        peak_number         ,
+                        max_index_rqs       ,
+                        index_expire_mins   ,
+                        max_index_threads   ,
+                        max_match_rqs       ,  
+                        match_expire_mins   ,
+                        max_match_threads   );
+
+        const std::string& sample_path_str = std::string(samples_path);
+        const std::string& sample_part_path_str = std::string(samples_part_path);
+
+        sonora.run();
+        uint64_t index_job_id = sonora.index(sample_path_str).value();
+
+        while(sonora.getIndexStatus(index_job_id) != request_status_t::OP_OK)
+            if(sonora.getIndexStatus(index_job_id) == request_status_t::OP_ERROR)
+                FAIL("Given song could not be properly indexed");
+            else
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        
+        uint64_t match_job_id = sonora.match(sample_part_path_str).value();
+    
+        while(sonora.getMatchStatus(match_job_id) != request_status_t::OP_OK)
+            if(sonora.getMatchStatus(match_job_id) == request_status_t::OP_ERROR)
+                FAIL("Given song could not be properly matched");
+            else
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        REQUIRE(sonora.getMatchResult(match_job_id) == sample_path_str);
 
         std::filesystem::remove(dummy_db_path);
     }
