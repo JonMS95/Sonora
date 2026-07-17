@@ -12,6 +12,7 @@ static const std::filesystem::path db_dir_path = test_data_dir_path / "db";
 static const std::filesystem::path full_samples_dir_path = test_data_dir_path / "samples" / "full_samples";
 
 static const std::string& samples_db_path = std::string(db_dir_path / "sample_fingerprints.db");
+static const std::string& no_db_path = std::string(db_dir_path / "non_existing.db");
 
 static const std::string& dummy_db_base = "dummy_test_audio_matcher.db";
 static const std::string& dummy_db_path = std::string(db_dir_path / dummy_db_base);
@@ -82,7 +83,7 @@ TEST_CASE("Audio Matcher: Constructor with custom parameters", "[Audio Matcher][
             SECTION("Valid directory but not a database path")
             {
                 REQUIRE_THROWS_AS(AudioMatcher( downsmp_freq    ,
-                                                dummy_db_path   ,
+                                                no_db_path      ,
                                                 fir_coefs       ,
                                                 frame_duration  ,
                                                 feature_ratio   ,
