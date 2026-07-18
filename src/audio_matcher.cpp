@@ -13,13 +13,13 @@ AudioMatcher::AudioMatcher( const uint32_t downsmp_freq ,
                 feature_ratio   ,
                 window_size     ,
                 peak_number     ),
-    audio_db_matcher_(AudioDBMatcher(   db_path         ,
-                                        downsmp_freq    ,
-                                        fir_coefs       ,
-                                        frame_duration  ,
-                                        feature_ratio   ,
-                                        window_size     ,
-                                        peak_number     ))
+    audio_db_matcher_(  db_path         ,
+                        downsmp_freq    ,
+                        fir_coefs       ,
+                        frame_duration  ,
+                        feature_ratio   ,
+                        window_size     ,
+                        peak_number     )
 {}
 
 std::string AudioMatcher::match(const std::string& file_path)

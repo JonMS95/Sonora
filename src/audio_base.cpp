@@ -26,13 +26,13 @@ AudioBase::Config AudioBase::makeConfig(const uint32_t downsmp_freq ,
 }
 
 AudioBase::AudioBase(const Config& cfg):
-    downsmp_freq_(cfg.downsmp_freq)                             ,
-    fir_coefs_(cfg.fir_coefs)                                   ,
-    spectral_analyzer_(SpectralAnalyzer(cfg.frame_duration      ,
-                                        cfg.downsmp_freq        ,
-                                        cfg.feature_ratio       ,
-                                        cfg.peak_number))       ,
-    fingerprint_generator_(FingerprintGenerator(cfg.window_size ))
+    downsmp_freq_(cfg.downsmp_freq) ,
+    fir_coefs_(cfg.fir_coefs)       ,
+    spectral_analyzer_( cfg.frame_duration  ,
+                        cfg.downsmp_freq    ,
+                        cfg.feature_ratio   ,
+                        cfg.peak_number)    ,
+    fingerprint_generator_(cfg.window_size)
 {}
 
 AudioBase::AudioBase(   const uint32_t downsmp_freq ,

@@ -15,13 +15,13 @@ AudioIndexer::AudioIndexer( const uint32_t downsmp_freq ,
                 feature_ratio   ,
                 window_size     ,
                 peak_number     ),
-    audio_db_indexer_(AudioDBIndexer(   db_path         ,
-                                        downsmp_freq    ,
-                                        fir_coefs       ,
-                                        frame_duration  ,
-                                        feature_ratio   ,
-                                        window_size     ,
-                                        peak_number     ))
+    audio_db_indexer_(  db_path         ,
+                        downsmp_freq    ,
+                        fir_coefs       ,
+                        frame_duration  ,
+                        feature_ratio   ,
+                        window_size     ,
+                        peak_number     )
 {}
 
 void AudioIndexer::index(const std::string& file_path, const std::string& out_path)
