@@ -7,7 +7,7 @@
 # make BUILD=release			# Build both in release mode
 # make lib BUILD=release
 # make cli BUILD=release
-# make tests              # Build only the unit tests (and lib if needed)
+# make tests              # Build only the tests (and lib if needed)
 # make BUILD=release
 # make clean
 
@@ -26,11 +26,11 @@ BUILD ?= debug
 LIB_NAME := sonora
 
 APP_NAME := sonora-cli
-TEST_NAME := unit_tests
+TEST_NAME := tests
 
 SRC_DIR  := src
 APP_DIR  := apps/cli/src
-TEST_DIR := tests/unit/src
+TEST_DIR := tests/src
 
 BUILD_DIR := build/$(BUILD)
 
@@ -44,7 +44,7 @@ LIB_TARGET  := $(LIB_DIR)/lib$(LIB_NAME).so
 APP_TARGET  := $(BIN_DIR)/$(APP_NAME)
 TEST_TARGET := $(BIN_DIR)/$(TEST_NAME)
 
-TEST_FILES_DIR := $(CURDIR)/tests/unit/data
+TEST_FILES_DIR := $(CURDIR)/tests/data
 
 # -----------------------------------------------------------------------------
 # Sources
@@ -56,7 +56,7 @@ TEST_SRCS := $(wildcard $(TEST_DIR)/*.cpp)
 
 LIB_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/src/%.o,$(LIB_SRCS))
 APP_OBJS := $(patsubst $(APP_DIR)/%.cpp,$(OBJ_DIR)/apps/cli/%.o,$(APP_SRCS))
-TEST_OBJS := $(patsubst $(TEST_DIR)/%.cpp,$(OBJ_DIR)/tests/unit/%.o,$(TEST_SRCS))
+TEST_OBJS := $(patsubst $(TEST_DIR)/%.cpp,$(OBJ_DIR)/tests/%.o,$(TEST_SRCS))
 
 LIB_DEPS := $(patsubst $(OBJ_DIR)/%.o,$(DEP_DIR)/%.d,$(LIB_OBJS))
 APP_DEPS := $(patsubst $(OBJ_DIR)/%.o,$(DEP_DIR)/%.d,$(APP_OBJS))
@@ -158,7 +158,7 @@ $(OBJ_DIR)/apps/cli/%.o: $(APP_DIR)/%.cpp
 # Test sources
 # -----------------------------------------------------------------------------
 
-$(OBJ_DIR)/tests/unit/%.o: $(TEST_DIR)/%.cpp
+$(OBJ_DIR)/tests/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@mkdir -p $(dir $(patsubst $(OBJ_DIR)/%.o,$(DEP_DIR)/%.d,$@))
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(TEST_CPPFLAGS) $(PUBLIC_INC) $(PRIVATE_INC) $(DEPFLAGS) \
@@ -186,7 +186,7 @@ $(APP_TARGET): $(APP_OBJS) $(LIB_TARGET)
 		-o $@
 
 # -----------------------------------------------------------------------------
-# Unit test executable
+# Test executable
 # -----------------------------------------------------------------------------
 
 $(TEST_TARGET): $(TEST_OBJS) $(LIB_TARGET)
