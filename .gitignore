@@ -3,6 +3,6 @@ exe
 data
 *_bak
 build
-!tests/unit/data
+!tests/data
 *-wal
 *-shm
