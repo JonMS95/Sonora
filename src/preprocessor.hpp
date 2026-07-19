@@ -7,14 +7,30 @@
 #include <sndfile.h>
 #include <mutex>
 #include <optional>
+
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+}
+
 #include "fir_filter.hpp"
 
 class Preprocessor
 {
 private:
+    typedef struct SoundFileInfo
+    {
+        uint64_t num_of_frames;
+        uint32_t num_of_channels;
+        uint32_t sampling_rate;
+        // format?
+    };
+
     std::optional<FIRFilter> fir_filter_;
     const uint32_t downsmp_freq_;
-    SF_INFO sf_info_;
+    // SF_INFO sf_info_;
+    SoundFileInfo sound_file_info_;
     std::mutex prep_mtx_;
 
     std::vector<float>  _read(const std::string& file_path)                             ;
@@ -32,6 +48,7 @@ public:
                             const std::size_t fir_coefs = 101   );
 
     std::vector<float> preprocessData(const std::string& input_path, const std::string& output_path = "");
+    static void avFormatContextDeleter(AVFormatContext* fmt);
     static uint32_t getFileSampleRate(const std::string& file_path);
 };
 

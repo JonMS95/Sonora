@@ -1,19 +1,32 @@
 #include <memory>
 #include <stdexcept>
 #include <samplerate.h>
+#include <memory>
 #include "preprocessor.hpp"
+
+void Preprocessor::avFormatContextDeleter(AVFormatContext* fmt)
+{
+    avformat_close_input(&fmt);
+}
 
 uint32_t Preprocessor::getFileSampleRate(const std::string& file_path)
 {
-    SF_INFO sf_info{};
+    AVFormatContext* raw = nullptr;
 
-    // Create unique_ptr by providing data type and destructor method.
-    std::unique_ptr<SNDFILE, decltype(&sf_close)> p_file(sf_open(file_path.c_str(), SFM_READ, &sf_info), &sf_close);
+    if(avformat_open_input(&raw, file_path.c_str(), nullptr, nullptr) < 0)
+        throw std::runtime_error("Could not open provided file (" + file_path + ")");
 
-    if (!p_file)
-        throw std::runtime_error("Provided file (" + file_path + ") was not found");
+    std::unique_ptr<AVFormatContext, decltype(&Preprocessor::avFormatContextDeleter)> p_av_fmt(raw, &Preprocessor::avFormatContextDeleter);
 
-    return sf_info.samplerate;
+    if (avformat_find_stream_info(p_av_fmt.get(), nullptr) < 0)
+        throw std::runtime_error("Could not find stream (" + file_path + ")");
+
+    const int audio_stream = av_find_best_stream(p_av_fmt.get(), AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+
+    if(audio_stream == -1)
+        throw std::runtime_error("No audio stream found in file (" + file_path + ")");
+
+    return p_av_fmt->streams[audio_stream]->codecpar->sample_rate;
 }
 
 static std::optional<FIRFilter> initFIRFilter(const uint32_t smp_rate, const uint32_t downsmp_freq, const std::size_t fir_coefs)
