@@ -1,5 +1,5 @@
 Install dependencies (if needed):
-sudo apt install libsamplerate0-dev libsndfile1-dev libfftw3-dev libsqlite3-dev catch2
+sudo apt install libsamplerate0-dev libsndfile1-dev libfftw3-dev libsqlite3-dev libavformat-dev libavcodec-dev libavutil-dev catch2
 
 Compile library and CLI executable:
 make release
