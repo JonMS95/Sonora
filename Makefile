@@ -78,6 +78,9 @@ LDFLAGS :=
 LDLIBS := \
 	-lsamplerate \
 	-lsndfile \
+	-lavformat \
+	-lavcodec \
+	-lavutil \
 	-lm \
 	-lfftw3f \
 	-lsqlite3 \
