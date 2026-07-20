@@ -12,6 +12,10 @@ sudo apt install -y \
     git \
     libsamplerate0-dev \
     libsndfile1-dev \
+    libavformat-dev \
+	libavcodec-dev \
+	libavutil-dev \
+	libswresample-dev \
     libfftw3-dev \
     libsqlite3-dev
 
