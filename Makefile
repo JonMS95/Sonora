@@ -81,6 +81,7 @@ LDLIBS := \
 	-lavformat \
 	-lavcodec \
 	-lavutil \
+	-lswresample \
 	-lm \
 	-lfftw3f \
 	-lsqlite3 \
