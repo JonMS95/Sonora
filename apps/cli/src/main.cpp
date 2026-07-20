@@ -79,6 +79,8 @@ int main(int argc, char** argv)
 
     sonora.run();
 
+    auto start_time = std::chrono::steady_clock::now();
+
     if(index_match == 'i')
     {
         std::optional<uint64_t> job_id = sonora.index(input);
@@ -136,6 +138,10 @@ int main(int argc, char** argv)
         std::cerr << "Provide either \'i\' or \'m\' as first input parameter, no other" << std::endl;
         return -1;
     }
+
+    auto end_time = std::chrono::steady_clock::now();
+    auto elapsed_time = std::chrono::duration<double>(end_time - start_time);
+    std::cout << "Elapsed: " << elapsed_time.count() << " s\n";
 
     sonora.end();
 
